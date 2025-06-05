@@ -71,127 +71,221 @@ export default function Login() {
    };
 
    return (
-      <div className='min-h-screen flex w-full bg-gradient-to-br from-background to-secondary/10'>
-         {/* Left column with image */}
-         <div className='hidden lg:flex w-1/2 bg-primary/5 items-center justify-center p-10'>
-            <div className='relative w-full max-w-lg'>
-               {/* Background decorative elements */}
-               <div className='absolute top-0 -left-4 w-72 h-72 bg-primary/5 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob'></div>
-               <div className='absolute top-0 -right-4 w-72 h-72 bg-secondary/5 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000'></div>
-               <div className='absolute -bottom-8 left-20 w-72 h-72 bg-accent/5 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000'></div>
+      <div className='min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-slate-900'>
+         {/* Glassmorphism container */}
+         <div className='flex flex-grow items-center justify-center p-4'>
+            <div className='w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-5 overflow-hidden rounded-3xl shadow-2xl backdrop-blur-md'>
+               {/* Left side - Brand */}
+               <div className='lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-indigo-600 dark:to-purple-800 p-8 flex flex-col justify-between'>
+                  {/* Decorative elements */}
+                  <div className='absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2'></div>
+                  <div className='absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2'></div>
 
-               {/* Logo or login image */}
-               <div className='relative'>
-                  <div className='relative flex items-center justify-center'>
-                     <img
-                        src={logo}
-                        alt='MedCosta Login'
-                        className='max-w-full max-h-[400px] object-contain drop-shadow-xl'
-                     />
-                  </div>
-                  <div className='mt-8 text-center'>
-                     <h2 className='text-3xl font-bold text-primary'>
-                        MedCosta
+                  {/* Content */}
+                  <div className='z-10'>
+                     <div className='flex items-center space-x-3 mb-12'>
+                        {/* <img
+                           src={logo}
+                           alt='MedCosta'
+                           className='h-10 w-auto'
+                        /> */}
+                        <h1 className='text-2xl font-bold text-white tracking-tight'>
+                           WorkNoFault
+                        </h1>
+                     </div>
+                     <h2 className='text-3xl md:text-4xl font-bold text-white mb-4'>
+                        Welcome back to the Healthcare Management System
                      </h2>
-                     <p className='mt-2 text-muted-foreground'>
-                        Healthcare Management System
+                     <p className='text-blue-100 text-lg max-w-sm'>
+                        Securely access your dashboard and manage your
+                        healthcare services efficiently.
+                     </p>
+                  </div>
+
+                  {/* Bottom text */}
+                  <div className='z-10 mt-auto'>
+                     <p className='text-sm text-blue-100 opacity-80'>
+                        © {new Date().getFullYear()} MedCosta Healthcare. All
+                        rights reserved.
                      </p>
                   </div>
                </div>
-            </div>
-         </div>
 
-         {/* Right column with login form */}
-         <div className='w-full lg:w-1/2 flex flex-col items-center justify-center p-8'>
-            <div className='w-full max-w-md'>
-               <div className='mb-8 lg:hidden text-center'>
-                  <img
-                     src={logo}
-                     alt='MedCosta'
-                     className='h-16 mx-auto mb-4'
-                  />
-                  <h2 className='text-2xl font-bold text-primary'>MedCosta</h2>
-                  <p className='text-sm text-muted-foreground'>
-                     Healthcare Management System
-                  </p>
-               </div>
+               {/* Right side - Login form */}
+               <div className='lg:col-span-3 bg-white dark:bg-gray-800 p-8 md:p-12'>
+                  <div className='w-full max-w-md mx-auto'>
+                     <div className='mb-8'>
+                        <h3 className='text-2xl font-bold text-gray-900 dark:text-white'>
+                           Sign in
+                        </h3>
+                        <p className='text-gray-600 dark:text-gray-300 mt-2'>
+                           Please enter your credentials to continue
+                        </p>
+                     </div>
 
-               <Card className='w-full'>
-                  <CardHeader className='space-y-1'>
-                     <CardTitle className='text-2xl font-bold text-center'>
-                        Sign in
-                     </CardTitle>
-                     <CardDescription className='text-center'>
-                        Enter your credentials to access your account
-                     </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                     <form onSubmit={handleSubmit} className='space-y-4'>
+                     <form onSubmit={handleSubmit} className='space-y-5'>
                         <div className='space-y-2'>
-                           <Label htmlFor='username'>Username</Label>
-                           <Input
-                              id='username'
-                              name='username'
-                              placeholder='Enter your username'
-                              type='text'
-                              value={formData.username}
-                              onChange={handleInputChange}
-                              required
-                           />
-                        </div>
-                        <div className='space-y-2'>
-                           <Label htmlFor='password'>Password</Label>
-                           <Input
-                              id='password'
-                              name='password'
-                              placeholder='Enter your password'
-                              type='password'
-                              value={formData.password}
-                              onChange={handleInputChange}
-                              required
-                           />
-                        </div>
-                        <div className='flex items-center justify-between'>
-                           <div className='flex items-center space-x-2'>
-                              <input
-                                 type='checkbox'
-                                 id='remember'
-                                 className='rounded border-gray-300 text-primary focus:ring-primary'
-                              />
-                              <Label
-                                 htmlFor='remember'
-                                 className='text-sm cursor-pointer'
-                              >
-                                 Remember me
-                              </Label>
-                           </div>
-                           <a
-                              href='#'
-                              className='text-sm font-medium text-primary hover:text-primary/80'
+                           <Label
+                              htmlFor='username'
+                              className='text-gray-900 dark:text-white'
                            >
-                              Forgot password?
-                           </a>
+                              Username
+                           </Label>
+                           <div className='relative'>
+                              <Input
+                                 id='username'
+                                 name='username'
+                                 placeholder='Enter your username'
+                                 type='text'
+                                 value={formData.username}
+                                 onChange={handleInputChange}
+                                 required
+                                 className='pl-10 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500'
+                              />
+                              <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                                 <svg
+                                    xmlns='http://www.w3.org/2000/svg'
+                                    className='h-5 w-5 text-gray-400'
+                                    viewBox='0 0 20 20'
+                                    fill='currentColor'
+                                 >
+                                    <path
+                                       fillRule='evenodd'
+                                       d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
+                                       clipRule='evenodd'
+                                    />
+                                 </svg>
+                              </div>
+                           </div>
                         </div>
+
+                        <div className='space-y-2'>
+                           <div className='flex items-center justify-between'>
+                              <Label
+                                 htmlFor='password'
+                                 className='text-gray-900 dark:text-white'
+                              >
+                                 Password
+                              </Label>
+                              <a
+                                 href='#'
+                                 className='text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400'
+                              >
+                                 Forgot password?
+                              </a>
+                           </div>
+                           <div className='relative'>
+                              <Input
+                                 id='password'
+                                 name='password'
+                                 placeholder='••••••••'
+                                 type='password'
+                                 value={formData.password}
+                                 onChange={handleInputChange}
+                                 required
+                                 className='pl-10 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500'
+                              />
+                              <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                                 <svg
+                                    xmlns='http://www.w3.org/2000/svg'
+                                    className='h-5 w-5 text-gray-400'
+                                    viewBox='0 0 20 20'
+                                    fill='currentColor'
+                                 >
+                                    <path
+                                       fillRule='evenodd'
+                                       d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
+                                       clipRule='evenodd'
+                                    />
+                                 </svg>
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className='flex items-center'>
+                           <input
+                              type='checkbox'
+                              id='remember'
+                              className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                           />
+                           <Label
+                              htmlFor='remember'
+                              className='ml-2 block text-sm text-gray-900 dark:text-gray-300'
+                           >
+                              Keep me signed in
+                           </Label>
+                        </div>
+
                         {error && (
-                           <div className='text-sm font-medium text-destructive'>
-                              {error}
+                           <div className='p-3 rounded-md bg-red-50 dark:bg-red-900/30'>
+                              <p className='text-sm font-medium text-red-800 dark:text-red-200'>
+                                 <span className='inline-flex mr-1'>
+                                    <svg
+                                       xmlns='http://www.w3.org/2000/svg'
+                                       className='h-5 w-5'
+                                       viewBox='0 0 20 20'
+                                       fill='currentColor'
+                                    >
+                                       <path
+                                          fillRule='evenodd'
+                                          d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 9a1 1 0 01-1-1v-4a1 1 0 112 0v4a1 1 0 01-1 1z'
+                                          clipRule='evenodd'
+                                       />
+                                    </svg>
+                                 </span>
+                                 {error}
+                              </p>
                            </div>
                         )}
+
                         <Button
                            type='submit'
-                           className='w-full'
+                           className='w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:scale-[1.02] focus:ring-4 focus:ring-blue-500/50'
                            disabled={isLoading}
                         >
-                           {isLoading ? "Signing in..." : "Sign in"}
+                           {isLoading ? (
+                              <span className='flex items-center justify-center'>
+                                 <svg
+                                    className='animate-spin -ml-1 mr-3 h-5 w-5 text-white'
+                                    xmlns='http://www.w3.org/2000/svg'
+                                    fill='none'
+                                    viewBox='0 0 24 24'
+                                 >
+                                    <circle
+                                       className='opacity-25'
+                                       cx='12'
+                                       cy='12'
+                                       r='10'
+                                       stroke='currentColor'
+                                       strokeWidth='4'
+                                    ></circle>
+                                    <path
+                                       className='opacity-75'
+                                       fill='currentColor'
+                                       d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                                    ></path>
+                                 </svg>
+                                 Signing in...
+                              </span>
+                           ) : (
+                              "Sign in to your account"
+                           )}
                         </Button>
+
+                        <div className='text-center pt-3'>
+                           <p className='text-sm text-gray-500 dark:text-gray-400'>
+                              Need an account?{" "}
+                              <a
+                                 href='#'
+                                 className='font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400'
+                              >
+                                 Contact administrator
+                              </a>
+                           </p>
+                        </div>
                      </form>
-                  </CardContent>
-                  <CardFooter className='flex justify-center'>
-                     <p className='text-sm text-muted-foreground'>
-                        Don't have an account? Contact your administrator
-                     </p>
-                  </CardFooter>
-               </Card>
+                  </div>
+               </div>
             </div>
          </div>
       </div>
