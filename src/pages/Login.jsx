@@ -12,7 +12,7 @@ import {
    CardFooter,
 } from "@/components/ui/card";
 import { AuthContext } from "@/App";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/medcosta-login.jpg";
 
 export default function Login() {
    const [formData, setFormData] = useState({
@@ -24,7 +24,7 @@ export default function Login() {
    const location = useLocation();
    const { login } = useContext(AuthContext);
    const [isLoading, setIsLoading] = useState(false);
-   const [error, setError] = useState("");
+   const [error, setError] = useState(location.state?.message || "");
 
    // Get the redirect path from location state or default to dashboard
    const from = location.state?.from?.pathname || "/";
