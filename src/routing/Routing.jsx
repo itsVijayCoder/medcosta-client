@@ -19,11 +19,27 @@ const ProtectedRoute = ({ children }) => {
    const { isAuthenticated } = useContext(AuthContext);
    const location = useLocation();
 
+   // Check if user is authenticated
    if (!isAuthenticated) {
-      // Redirect to login and save the attempted location for redirect after login
-      return <Navigate to='/login' state={{ from: location }} replace />;
+      // Save the attempted location for redirect after successful login
+      console.log(
+         "Access denied: Authentication required. Redirecting to login..."
+      );
+
+      // Redirect to login with location state to enable redirect back after login
+      return (
+         <Navigate
+            to='/login'
+            state={{
+               from: location,
+               message: "Please sign in to access this page",
+            }}
+            replace
+         />
+      );
    }
 
+   // User is authenticated, render the protected content
    return children;
 };
 

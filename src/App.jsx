@@ -6,10 +6,27 @@ import Routing from "./routing/Routing";
 export const AuthContext = createContext();
 
 function App() {
-   const [token, setToken] = useState(localStorage.getItem("token") || null);
-   const [isAuthenticated, setIsAuthenticated] = useState(
-      !!localStorage.getItem("token")
-   );
+   // Initialize token from tokenData if it exists and is valid
+   const getInitialToken = () => {
+      const tokenDataStr = localStorage.getItem("tokenData");
+      if (tokenDataStr) {
+         try {
+            const tokenData = JSON.parse(tokenDataStr);
+            // Check if token is valid (not expired)
+            const expirationTime = 86400000; // 24 hours
+            const now = Date.now();
+            if (now - tokenData.timestamp < expirationTime) {
+               return tokenData.token;
+            }
+         } catch (error) {
+            console.error("Error parsing token data:", error);
+         }
+      }
+      return null;
+   };
+
+   const [token, setToken] = useState(getInitialToken());
+   const [isAuthenticated, setIsAuthenticated] = useState(!!getInitialToken());
 
    // Authentication functions
    const login = (userToken) => {
@@ -60,6 +77,7 @@ function App() {
                } else {
                   // Token expired, clear it
                   handleLogout();
+                  console.log("Session expired. Please login again.");
                }
             } catch (error) {
                // Invalid token format, clear it
