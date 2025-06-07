@@ -131,7 +131,87 @@ export function MultiStepForm({
    const progress = ((currentStep + 1) / steps.length) * 100;
 
    return (
-      <div className={`w-full max-w-6xl mx-auto ${className}`}>
+      <div className={`w-full max-w-6xl mx-auto space-y-4 ${className}`}>
+         {/* Enhanced Current Step Content */}
+         <ConditionalAnimatePresence
+            enableAnimations={enableAnimations}
+            mode='wait'
+         >
+            <ConditionalMotion
+               enableAnimations={enableAnimations}
+               key={currentStep}
+               initial={{ opacity: 0, x: 50, scale: 0.95 }}
+               animate={{ opacity: 1, x: 0, scale: 1 }}
+               exit={{ opacity: 0, x: -50, scale: 0.95 }}
+               transition={{ duration: 0.4, ease: "easeInOut" }}
+            >
+               <Card className='border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden'>
+                  <CardHeader className='bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-b border-gray-100/50 relative overflow-hidden'>
+                     {/* Animated background pattern */}
+                     <div className='absolute inset-0 opacity-30'>
+                        <div className='absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(59,130,246,0.1),transparent_50%)] animate-pulse' />
+                        <div
+                           className='absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,rgba(139,92,246,0.1),transparent_50%)] animate-pulse'
+                           style={{ animationDelay: "1s" }}
+                        />
+                     </div>
+
+                     <div className='flex items-center justify-between relative z-10'>
+                        <ConditionalMotion
+                           enableAnimations={enableAnimations}
+                           initial={{ opacity: 0, y: 20 }}
+                           animate={{ opacity: 1, y: 0 }}
+                           transition={{ delay: 0.2, duration: 0.3 }}
+                        >
+                           <CardTitle className='text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-2'>
+                              {currentStepData?.title}
+                           </CardTitle>
+                           {currentStepData?.description && (
+                              <p className='text-gray-600 text-base leading-relaxed'>
+                                 {currentStepData.description}
+                              </p>
+                           )}
+                        </ConditionalMotion>
+                        {/* {currentStepData?.badge && (
+                           <motion.div
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.3, duration: 0.3 }}
+                           >
+                              <Badge
+                                 variant='secondary'
+                                 className='bg-blue-100 text-blue-700 border-blue-200 px-4 py-2 text-sm font-semibold'
+                              >
+                                 {currentStepData.badge}
+                              </Badge>
+                           </motion.div>
+                        )} */}
+                     </div>
+                  </CardHeader>
+
+                  <CardContent className='p-8 min-h-[500px] bg-gradient-to-br from-white to-gray-50/30'>
+                     <ConditionalMotion
+                        enableAnimations={enableAnimations}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3, duration: 0.4 }}
+                        className='h-full'
+                     >
+                        {/* Render current step component */}
+                        {currentStepData?.component && (
+                           <currentStepData.component
+                              data={formData}
+                              onDataChange={updateFormData}
+                              stepIndex={currentStep}
+                              isLastStep={isLastStep}
+                           />
+                        )}
+                     </ConditionalMotion>
+                  </CardContent>
+               </Card>
+            </ConditionalMotion>
+         </ConditionalAnimatePresence>
+
          {/* Enhanced Modern Step Navigation */}
          <ConditionalMotion
             enableAnimations={enableAnimations}
@@ -139,7 +219,7 @@ export function MultiStepForm({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
          >
-            <Card className='mb-8 border-0 shadow-xl bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/40 backdrop-blur-sm overflow-hidden'>
+            <Card className=' border-0 shadow-xl bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/40 backdrop-blur-sm overflow-hidden'>
                <CardContent className=' pb-6 px-4 sm:px-8'>
                   {/* Progress Bar Background */}
                   <div className='relative mb-8'>
@@ -378,86 +458,6 @@ export function MultiStepForm({
             </Card>
          </ConditionalMotion>
 
-         {/* Enhanced Current Step Content */}
-         <ConditionalAnimatePresence
-            enableAnimations={enableAnimations}
-            mode='wait'
-         >
-            <ConditionalMotion
-               enableAnimations={enableAnimations}
-               key={currentStep}
-               initial={{ opacity: 0, x: 50, scale: 0.95 }}
-               animate={{ opacity: 1, x: 0, scale: 1 }}
-               exit={{ opacity: 0, x: -50, scale: 0.95 }}
-               transition={{ duration: 0.4, ease: "easeInOut" }}
-            >
-               <Card className='border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden'>
-                  <CardHeader className='bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-b border-gray-100/50 relative overflow-hidden'>
-                     {/* Animated background pattern */}
-                     <div className='absolute inset-0 opacity-30'>
-                        <div className='absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(59,130,246,0.1),transparent_50%)] animate-pulse' />
-                        <div
-                           className='absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,rgba(139,92,246,0.1),transparent_50%)] animate-pulse'
-                           style={{ animationDelay: "1s" }}
-                        />
-                     </div>
-
-                     <div className='flex items-center justify-between relative z-10'>
-                        <ConditionalMotion
-                           enableAnimations={enableAnimations}
-                           initial={{ opacity: 0, y: 20 }}
-                           animate={{ opacity: 1, y: 0 }}
-                           transition={{ delay: 0.2, duration: 0.3 }}
-                        >
-                           <CardTitle className='text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-2'>
-                              {currentStepData?.title}
-                           </CardTitle>
-                           {currentStepData?.description && (
-                              <p className='text-gray-600 text-base leading-relaxed'>
-                                 {currentStepData.description}
-                              </p>
-                           )}
-                        </ConditionalMotion>
-                        {/* {currentStepData?.badge && (
-                           <motion.div
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: 0.3, duration: 0.3 }}
-                           >
-                              <Badge
-                                 variant='secondary'
-                                 className='bg-blue-100 text-blue-700 border-blue-200 px-4 py-2 text-sm font-semibold'
-                              >
-                                 {currentStepData.badge}
-                              </Badge>
-                           </motion.div>
-                        )} */}
-                     </div>
-                  </CardHeader>
-
-                  <CardContent className='p-8 min-h-[500px] bg-gradient-to-br from-white to-gray-50/30'>
-                     <ConditionalMotion
-                        enableAnimations={enableAnimations}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.4 }}
-                        className='h-full'
-                     >
-                        {/* Render current step component */}
-                        {currentStepData?.component && (
-                           <currentStepData.component
-                              data={formData}
-                              onDataChange={updateFormData}
-                              stepIndex={currentStep}
-                              isLastStep={isLastStep}
-                           />
-                        )}
-                     </ConditionalMotion>
-                  </CardContent>
-               </Card>
-            </ConditionalMotion>
-         </ConditionalAnimatePresence>
-
          {/* Enhanced Navigation Buttons */}
          <ConditionalMotion
             enableAnimations={enableAnimations}
@@ -465,7 +465,7 @@ export function MultiStepForm({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.3 }}
          >
-            <Card className='mt-8 border-0 shadow-xl bg-white/95 backdrop-blur-sm overflow-hidden'>
+            <Card className=' border-0 shadow-xl bg-white/95 backdrop-blur-sm overflow-hidden'>
                <CardContent className='py-6 px-4 sm:px-8'>
                   <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
                      <ConditionalMotion
