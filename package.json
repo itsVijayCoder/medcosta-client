@@ -34,6 +34,7 @@
     "datatables.net-dt": "^2.3.1",
     "datatables.net-responsive-dt": "^3.0.4",
     "date-fns": "^3.6.0",
+    "framer-motion": "^12.16.0",
     "jquery": "^3.7.1",
     "lucide-react": "^0.511.0",
     "react-day-picker": "^8.10.1",

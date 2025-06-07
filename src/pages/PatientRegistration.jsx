@@ -89,17 +89,24 @@ const PatientRegistration = () => {
          alert("Error occurred during registration.");
       }
    };
-
    return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6'>
-         <div className='max-w-4xl mx-auto'>
-            <div className='text-center mb-8'>
-               <h1 className='text-4xl font-bold text-gray-900 mb-2'>
+      <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 sm:p-6 relative overflow-hidden'>
+         {/* Enhanced Background Pattern */}
+         <div className='absolute inset-0 opacity-30'>
+            <div className='absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl animate-blob' />
+            <div className='absolute top-40 right-10 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000' />
+            <div className='absolute bottom-20 left-20 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000' />
+         </div>
+
+         <div className='max-w-5xl mx-auto relative z-10'>
+            <div className='text-center mb-8 sm:mb-12'>
+               <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-3 sm:mb-4'>
                   Patient Registration
                </h1>
-               <p className='text-lg text-gray-600'>
-                  Complete the patient registration process step by step
-               </p>
+               {/* <p className='text-lg sm:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto'>
+                  Complete the patient registration process step by step with
+                  our modern, intuitive interface
+               </p> */}
             </div>
 
             <MultiStepForm
@@ -109,7 +116,7 @@ const PatientRegistration = () => {
                onSubmit={handleSubmit}
                onCancel={() => navigate(-1)}
                submitButtonText='Complete Registration'
-               className=' rounded-xl shadow-xl bg-transparent backdrop-blur-sm '
+               className='rounded-xl bg-transparent backdrop-blur-sm'
             />
          </div>
       </div>
