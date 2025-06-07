@@ -1,69 +1,97 @@
 import React, { useState, useEffect } from "react";
-import { DataTable } from "@/components/ui/data-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import GenericTable from "@/components/ui/generic-table";
+import { tableConfigs } from "@/data/tableConfigs";
 
 const DeleteTable = () => {
-  const [data, setData] = useState([]);
+   const [data, setData] = useState([]);
+   const [loading, setLoading] = useState(false);
+   const config = tableConfigs.deleteVisit;
 
-  useEffect(() => {
-    fetchDeleteData();
-  }, []);
+   useEffect(() => {
+      fetchDeleteData();
+   }, []);
 
-  const fetchDeleteData = () => {
-    fetch("http://localhost/medcosta/index.php/deletevisit/get_deletevisit_data")
-      .then((res) => res.json())
-      .then((data) => setData(data))
-      .catch((err) => console.error("Error fetching deletevisit data:", err));
-  };
+   const fetchDeleteData = async () => {
+      setLoading(true);
+      try {
+         const response = await fetch(
+            "http://localhost/medcosta/index.php/deletevisit/get_deletevisit_data"
+         );
+         const result = await response.json();
+         setData(result || []);
+      } catch (err) {
+         console.error("Error fetching deletevisit data:", err);
+         setData([]);
+      } finally {
+         setLoading(false);
+      }
+   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to permanently delete this visit?")) {
-      fetch("http://localhost/medcosta/index.php/deletevisit/delete_permanently", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id }),
-      })
-        .then((res) => res.json())
-        .then((result) => {
-          if (result.status === "success") {
-            alert("Deleted permanently");
+   const handleDelete = async (selectedRows) => {
+      if (!selectedRows || selectedRows.length === 0) {
+         alert("Please select at least one record to delete permanently.");
+         return;
+      }
+
+      const confirmMessage =
+         selectedRows.length === 1
+            ? "Are you sure you want to permanently delete this visit?"
+            : `Are you sure you want to permanently delete ${selectedRows.length} visits?`;
+
+      if (window.confirm(confirmMessage)) {
+         setLoading(true);
+         try {
+            const deletePromises = selectedRows.map(async (row) => {
+               const response = await fetch(
+                  "http://localhost/medcosta/index.php/deletevisit/delete_permanently",
+                  {
+                     method: "POST",
+                     headers: {
+                        "Content-Type": "application/json",
+                     },
+                     body: JSON.stringify({
+                        id: row.original.EventID || row.original.id,
+                     }),
+                  }
+               );
+               return response.json();
+            });
+
+            const results = await Promise.all(deletePromises);
+            const successCount = results.filter(
+               (result) => result.status === "success"
+            ).length;
+
+            if (successCount === selectedRows.length) {
+               alert(`${successCount} record(s) deleted permanently`);
+            } else {
+               alert(
+                  `${successCount} out of ${selectedRows.length} records deleted successfully`
+               );
+            }
+
             fetchDeleteData();
-          } else {
-            alert("Failed to delete");
-          }
-        })
-        .catch((err) => console.error("Delete error:", err));
-    }
-  };
+         } catch (err) {
+            console.error("Delete error:", err);
+            alert("Failed to delete records");
+         } finally {
+            setLoading(false);
+         }
+      }
+   };
 
-  const columns = [
-    { header: "Case Number", accessorKey: "CaseNumber" },
-    { header: "Event Date", accessorKey: "EventDate" },
-    { header: "Doctor Name", accessorKey: "DoctorName" },
-    { header: "Speciality", accessorKey: "speciality" },
-    { header: "Event ID", accessorKey: "EventID" },
-  ];
-
-  return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-red-500">Deleted Visit Records</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={data}
-            columns={columns}
-            onDelete={handleDelete}
-          />
-        </CardContent>
-      </Card>
-    </div>
-  );
+   return (
+      <GenericTable
+         {...config}
+         data={data}
+         loading={loading}
+         onDelete={handleDelete}
+         showAddButton={false}
+         showEditButton={false}
+         deleteButtonText='Delete Permanently'
+         deleteButtonVariant='destructive'
+      />
+   );
 };
 
 export default DeleteTable;
-
-

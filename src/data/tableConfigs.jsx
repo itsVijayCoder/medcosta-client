@@ -6,6 +6,7 @@ import {
    FaMapMarkerAlt,
    FaClipboardList,
 } from "react-icons/fa";
+import { Trash2 } from "lucide-react";
 
 // Common form field options
 export const yesNoOptions = [
@@ -574,6 +575,97 @@ export const tableConfigs = {
             options: stateOptions,
          },
          { key: "zip", label: "ZIP Code", type: "text" },
+      ],
+   },
+
+   deleteVisit: {
+      title: "Delete Visit Management",
+      subtitle: "Manage deleted visit records and permanent deletion",
+      icon: Trash2,
+      gradientColors: "bg-gradient-to-r from-red-600 to-rose-600",
+      backgroundColor: "bg-gradient-to-br from-red-50 via-rose-50 to-pink-100",
+      searchPlaceholder: "Search deleted visits...",
+      emptyMessage: "No deleted visit records found",
+      columns: [
+         {
+            header: "Case Number",
+            accessorKey: "CaseNumber",
+            cell: ({ row }) => (
+               <div className='font-mono font-semibold text-red-700 bg-red-50 px-2 py-1 rounded'>
+                  {row.getValue("CaseNumber")}
+               </div>
+            ),
+         },
+         {
+            header: "Event Date",
+            accessorKey: "EventDate",
+            cell: ({ row }) => (
+               <div className='font-medium text-gray-900'>
+                  {new Date(row.getValue("EventDate")).toLocaleDateString()}
+               </div>
+            ),
+         },
+         {
+            header: "Doctor Name",
+            accessorKey: "DoctorName",
+            cell: ({ row }) => (
+               <div className='font-semibold text-gray-800'>
+                  {row.getValue("DoctorName")}
+               </div>
+            ),
+         },
+         {
+            header: "Speciality",
+            accessorKey: "speciality",
+            cell: ({ row }) => (
+               <span className='px-2 py-1 rounded-full text-xs font-medium bg-rose-100 text-rose-800'>
+                  {row.getValue("speciality")}
+               </span>
+            ),
+         },
+         {
+            header: "Event ID",
+            accessorKey: "EventID",
+            cell: ({ row }) => (
+               <div className='font-mono text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded'>
+                  {row.getValue("EventID")}
+               </div>
+            ),
+         },
+      ],
+      formFields: [
+         {
+            key: "CaseNumber",
+            label: "Case Number",
+            type: "text",
+            className: "font-mono",
+            disabled: true,
+         },
+         {
+            key: "EventDate",
+            label: "Event Date",
+            type: "date",
+            disabled: true,
+         },
+         {
+            key: "DoctorName",
+            label: "Doctor Name",
+            type: "text",
+            disabled: true,
+         },
+         {
+            key: "speciality",
+            label: "Speciality",
+            type: "text",
+            disabled: true,
+         },
+         {
+            key: "EventID",
+            label: "Event ID",
+            type: "text",
+            className: "font-mono",
+            disabled: true,
+         },
       ],
    },
 };

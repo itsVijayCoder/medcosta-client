@@ -25,6 +25,12 @@ const GenericTable = ({
    searchPlaceholder = "Search records...",
    emptyMessage = "No records found",
    modalWidth = "sm:max-w-[700px]",
+   loading = false,
+   onDelete: customOnDelete,
+   showAddButton = true,
+   showEditButton = true,
+   deleteButtonText = "Delete",
+   deleteButtonVariant = "outline",
 }) => {
    const [data, setData] = useState(initialData);
    const [selectedRows, setSelectedRows] = useState([]);
@@ -78,13 +84,20 @@ const GenericTable = ({
    };
 
    const handleDelete = (ids) => {
-      if (
-         window.confirm(
-            `Are you sure you want to delete ${ids.length} record(s)?`
-         )
-      ) {
-         setData(data.filter((item) => !ids.includes(item.id)));
-         setSelectedRows([]);
+      if (customOnDelete) {
+         // Use custom delete handler if provided
+         const rowsToDelete = data.filter((item) => ids.includes(item.id));
+         customOnDelete(rowsToDelete);
+      } else {
+         // Default delete behavior
+         if (
+            window.confirm(
+               `Are you sure you want to delete ${ids.length} record(s)?`
+            )
+         ) {
+            setData(data.filter((item) => !ids.includes(item.id)));
+            setSelectedRows([]);
+         }
       }
    };
 
@@ -198,41 +211,43 @@ const GenericTable = ({
                            <p className='text-white/80 mt-1'>{subtitle}</p>
                         </div>
                      </div>
-                     <Modal
-                        trigger={
-                           <Button className='bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm'>
-                              <FaPlus className='mr-2 h-4 w-4' /> Add{" "}
-                              {title.split(" ")[0]}
-                           </Button>
-                        }
-                        title={`Add New ${title.split(" ")[0]}`}
-                        className={modalWidth}
-                     >
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4 p-4 max-h-[70vh] overflow-y-auto'>
-                           {formFields &&
-                              formFields.map((field) => (
-                                 <div
-                                    key={field.key}
-                                    className={
-                                       field.fullWidth ? "col-span-full" : ""
-                                    }
-                                 >
-                                    <label className='block text-sm font-medium text-gray-700 mb-2'>
-                                       {field.label}
-                                    </label>
-                                    {renderFormField(field)}
-                                 </div>
-                              ))}
-                           <div className='col-span-full flex justify-end mt-4'>
-                              <Button
-                                 onClick={handleAddRecord}
-                                 className={`${gradientColors} hover:opacity-90`}
-                              >
-                                 Save {title.split(" ")[0]}
+                     {showAddButton && (
+                        <Modal
+                           trigger={
+                              <Button className='bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm'>
+                                 <FaPlus className='mr-2 h-4 w-4' /> Add{" "}
+                                 {title.split(" ")[0]}
                               </Button>
+                           }
+                           title={`Add New ${title.split(" ")[0]}`}
+                           className={modalWidth}
+                        >
+                           <div className='grid grid-cols-1 md:grid-cols-2 gap-4 p-4 max-h-[70vh] overflow-y-auto'>
+                              {formFields &&
+                                 formFields.map((field) => (
+                                    <div
+                                       key={field.key}
+                                       className={
+                                          field.fullWidth ? "col-span-full" : ""
+                                       }
+                                    >
+                                       <label className='block text-sm font-medium text-gray-700 mb-2'>
+                                          {field.label}
+                                       </label>
+                                       {renderFormField(field)}
+                                    </div>
+                                 ))}
+                              <div className='col-span-full flex justify-end mt-4'>
+                                 <Button
+                                    onClick={handleAddRecord}
+                                    className={`${gradientColors} hover:opacity-90`}
+                                 >
+                                    Save {title.split(" ")[0]}
+                                 </Button>
+                              </div>
                            </div>
-                        </div>
-                     </Modal>
+                        </Modal>
+                     )}
                   </div>
                </CardHeader>
                {/* <CardContent className='p-6'> */}
@@ -247,6 +262,8 @@ const GenericTable = ({
                   setSelectedRows={setSelectedRows}
                   searchPlaceholder={searchPlaceholder}
                   emptyMessage={emptyMessage}
+                  addButton={showAddButton}
+                  actions={showEditButton}
                />
                {/* </CardContent> */}
             </Card>
