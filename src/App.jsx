@@ -1,6 +1,7 @@
 import "./App.css";
 import { createContext, useState, useEffect } from "react";
 import Routing from "./routing/Routing";
+import { prefetchCommonRoutes } from "./utils/route-prefetch.js";
 
 // Create AuthContext
 export const AuthContext = createContext();
@@ -45,6 +46,13 @@ function App() {
       setToken(null);
       setIsAuthenticated(false);
    };
+
+   // Prefetch common routes when the user is authenticated
+   useEffect(() => {
+      if (isAuthenticated) {
+         prefetchCommonRoutes();
+      }
+   }, [isAuthenticated]);
 
    // Check if token is valid (not expired)
    const isTokenValid = (tokenData) => {

@@ -1,12 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { MultiStepForm } from "@/components/ui/multi-step-form";
 import { Button } from "@/components/ui/button";
-import { PersonalInfoStep } from "@/components/form-steps/PersonalInfoStep";
-import { AccidentInfoStep } from "@/components/form-steps/AccidentInfoStep";
-import { InsuranceInfoStep } from "@/components/form-steps/InsuranceInfoStep";
-import { EmployerAdjusterStep } from "@/components/form-steps/EmployerAdjusterStep";
 import { User, FileText, Shield, Building2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
+// Create a custom lazy loading wrapper for form step components
+const createLazyComponent = (importFn, exportName) => {
+   const LazyComponent = lazy(() =>
+      importFn().then((module) => ({ default: module[exportName] }))
+   );
+
+   return (props) => (
+      <Suspense fallback={<LoadingSpinner />}>
+         <LazyComponent {...props} />
+      </Suspense>
+   );
+};
+
+// Lazily load form step components with direct import functions
+const PersonalInfoStep = createLazyComponent(
+   () => import("../components/form-steps/PersonalInfoStep"),
+   "PersonalInfoStep"
+);
+const AccidentInfoStep = createLazyComponent(
+   () => import("../components/form-steps/AccidentInfoStep"),
+   "AccidentInfoStep"
+);
+const InsuranceInfoStep = createLazyComponent(
+   () => import("../components/form-steps/InsuranceInfoStep"),
+   "InsuranceInfoStep"
+);
+const EmployerAdjusterStep = createLazyComponent(
+   () => import("../components/form-steps/EmployerAdjusterStep"),
+   "EmployerAdjusterStep"
+);
 
 const PatientRegistration = () => {
    const navigate = useNavigate();
@@ -120,7 +148,7 @@ const PatientRegistration = () => {
 
          <div className='max-w-5xl mx-auto relative z-10'>
             <div className='text-center mb-8 sm:mb-12'>
-               <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-3 sm:mb-4'>
+               <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-3 sm:mb-4 pb-2'>
                   Patient Registration
                </h1>
                {/* <p className='text-lg sm:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto'>
