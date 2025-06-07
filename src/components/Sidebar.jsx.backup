@@ -1,0 +1,542 @@
+import { useState, useContext, useEffect, useRef, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+   Users,
+   FileText,
+   Calendar,
+   Settings,
+   FolderOpen,
+   LogOut,
+   Menu,
+   ChevronRight,
+   Home,
+   Building2,
+   Stethoscope,
+   Activity,
+   Plus,
+   Trash2,
+   Search,
+   X,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { AuthContext } from "@/App";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+   Collapsible,
+   CollapsibleContent,
+   CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
+import logoImage from "../assets/logo.png";
+
+// Search Component for Sidebar
+const SidebarSearch = ({ searchTerm, setSearchTerm, onClear, inputRef }) => (
+   <div className='relative mx-4 mb-4'>
+      <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-sidebar-foreground/40' />
+      <Input
+         ref={inputRef}
+         placeholder='Search navigation...'
+         value={searchTerm}
+         onChange={(e) => setSearchTerm(e.target.value)}
+         className='pl-10 pr-10 h-9 bg-sidebar-accent/30 border-sidebar-border focus:bg-sidebar-accent/50 text-sidebar-foreground placeholder:text-sidebar-foreground/50'
+      />
+      {searchTerm && (
+         <Button
+            variant='ghost'
+            size='icon'
+            onClick={onClear}
+            className='absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 text-sidebar-foreground/40 hover:text-sidebar-foreground'
+         >
+            <X className='h-3 w-3' />
+         </Button>
+      )}
+   </div>
+);
+
+// Modern Sidebar Header Component
+const SidebarHeader = () => (
+   <div className='sticky top-0 z-10 bg-sidebar/95 backdrop-blur-md border-b border-sidebar-border px-6 py-5 w-full'>
+      <div className='flex items-center gap-3'>
+         <div className='relative group'>
+            <img
+               src={logoImage}
+               alt='Logo'
+               className='h-8 w-8 rounded-lg transition-transform duration-200 group-hover:scale-105'
+            />
+            <div className='absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-sidebar animate-pulse'></div>
+         </div>
+         <div>
+            <h2 className='text-lg font-bold text-sidebar-foreground tracking-tight'>
+               WorkNoFault
+            </h2>
+            <p className='text-xs text-sidebar-foreground/60 font-medium'>
+               Healthcare Management
+            </p>
+         </div>
+      </div>
+   </div>
+);
+
+// Modern MenuItem Component
+const MenuItem = ({
+   icon: Icon,
+   label,
+   onClick,
+   isActive,
+   hasSubmenu,
+   isOpen,
+   isHighlighted,
+}) => (
+   <Button
+      variant='ghost'
+      className={cn(
+         "w-full justify-start gap-3 h-11 px-3 font-medium transition-all duration-200 group relative",
+         isActive
+            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm border border-sidebar-border/50"
+            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+         isHighlighted && "bg-sidebar-accent/30 ring-2 ring-sidebar-primary/20"
+      )}
+      onClick={onClick}
+   >
+      <Icon
+         className={cn(
+            "h-4 w-4 transition-all duration-200",
+            isActive
+               ? "text-sidebar-primary scale-110"
+               : "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground group-hover:scale-105"
+         )}
+      />
+      <span className='flex-1 text-left'>{label}</span>
+      {hasSubmenu && (
+         <ChevronRight
+            className={cn(
+               "h-4 w-4 transition-all duration-200",
+               isOpen && "rotate-90 text-sidebar-primary",
+               isActive
+                  ? "text-sidebar-primary"
+                  : "text-sidebar-foreground/40 group-hover:text-sidebar-accent-foreground"
+            )}
+         />
+      )}
+      {isActive && (
+         <div className='absolute left-0 top-0 bottom-0 w-1 bg-sidebar-primary rounded-r-full' />
+      )}
+   </Button>
+);
+
+// Modern SubMenuItem Component
+const SubMenuItem = ({
+   label,
+   onClick,
+   isActive,
+   icon: Icon,
+   isHighlighted,
+}) => (
+   <Button
+      variant='ghost'
+      className={cn(
+         "w-full justify-start gap-3 h-9 pl-12 pr-3 text-sm font-normal transition-all duration-200 group relative",
+         isActive
+            ? "bg-sidebar-primary/10 text-sidebar-primary border-r-2 border-sidebar-primary"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-accent-foreground",
+         isHighlighted && "bg-sidebar-accent/30 ring-2 ring-sidebar-primary/20"
+      )}
+      onClick={onClick}
+   >
+      {Icon && (
+         <Icon
+            className={cn(
+               "h-3.5 w-3.5 transition-all duration-200",
+               isActive
+                  ? "text-sidebar-primary scale-110"
+                  : "text-sidebar-foreground/50 group-hover:scale-105"
+            )}
+         />
+      )}
+      <span className='flex-1 text-left'>{label}</span>
+      {isActive && (
+         <div className='absolute right-0 top-0 bottom-0 w-0.5 bg-sidebar-primary' />
+      )}
+   </Button>
+);
+
+// Main Sidebar Component
+const Sidebar = ({ setRouteName }) => {
+   const navigate = useNavigate();
+   const location = useLocation();
+   const [openMenus, setOpenMenus] = useState(new Set());
+   const [isMobileOpen, setIsMobileOpen] = useState(false);
+   const [searchTerm, setSearchTerm] = useState("");
+   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+   const { logout } = useContext(AuthContext);
+   const searchInputRef = useRef(null);
+   const handleNavigate = useCallback(
+      (path, name) => {
+         navigate(path);
+         setRouteName(name);
+         setIsMobileOpen(false);
+         setSearchTerm("");
+         setHighlightedIndex(-1);
+      },
+      [navigate, setRouteName]
+   );
+   const toggleMenu = (menuLabel) => {
+      const newOpenMenus = new Set(openMenus);
+      if (newOpenMenus.has(menuLabel)) {
+         newOpenMenus.delete(menuLabel);
+      } else {
+         newOpenMenus.add(menuLabel);
+      }
+      setOpenMenus(newOpenMenus);
+   };
+
+   // Menu items definition
+   const menuItems = [
+      {
+         icon: Home,
+         label: "Dashboard",
+         path: "/",
+      },
+      {
+         icon: FolderOpen,
+         label: "Data Entry",
+         submenu: [
+            {
+               label: "Patient Entry",
+               path: "/dataentry/patient-entry",
+               icon: Users,
+            },
+            {
+               label: "Insurance Company Master",
+               path: "/dataentry/insurance-master",
+               icon: Building2,
+            },
+            {
+               label: "Location",
+               path: "/dataentry/location",
+               icon: Building2,
+            },
+            {
+               label: "Diagnosis Code",
+               path: "/dataentry/diagnosis-code",
+               icon: Activity,
+            },
+            {
+               label: "Procedure Master",
+               path: "/dataentry/procedure-master",
+               icon: Stethoscope,
+            },
+            {
+               label: "Provider Master",
+               path: "/dataentry/provider-master",
+               icon: Users,
+            },
+            {
+               label: "Modifier Master",
+               path: "/dataentry/modifier-master",
+               icon: Settings,
+            },
+            {
+               label: "Delete Visit",
+               path: "/dataentry/delete-visit",
+               icon: Trash2,
+            },
+         ],
+      },
+      {
+         icon: FileText,
+         label: "Reports",
+         path: "/reports",
+      },
+      {
+         icon: Users,
+         label: "Patients",
+         path: "/Patients",
+      },
+      {
+         icon: Calendar,
+         label: "Appointments",
+         submenu: [
+            {
+               label: "New Appointment",
+               path: "/appointments/new",
+               icon: Plus,
+            },
+            {
+               label: "Search Appointments",
+               path: "/appointments/search",
+               icon: Building2,
+            },
+         ],
+      },
+      {
+         icon: Settings,
+         label: "Quick Links",
+         path: "/Quick Links",
+      },
+   ];
+
+   // Search and filter functionality
+   const filterMenuItems = (items, searchTerm) => {
+      if (!searchTerm) return items;
+
+      return items.reduce((filtered, item) => {
+         const itemMatches = item.label
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase());
+
+         if (item.submenu) {
+            const filteredSubmenu = item.submenu.filter((subItem) =>
+               subItem.label.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            if (itemMatches || filteredSubmenu.length > 0) {
+               filtered.push({
+                  ...item,
+                  submenu:
+                     filteredSubmenu.length > 0
+                        ? filteredSubmenu
+                        : item.submenu,
+               });
+            }
+         } else if (itemMatches) {
+            filtered.push(item);
+         }
+
+         return filtered;
+      }, []);
+   };
+
+   // Get all navigatable items for keyboard navigation
+   const getAllNavigatableItems = (items) => {
+      const navigatable = [];
+      items.forEach((item) => {
+         if (item.path) {
+            navigatable.push({
+               type: "main",
+               item,
+               path: item.path,
+               label: item.label,
+            });
+         }
+         if (item.submenu) {
+            item.submenu.forEach((subItem) => {
+               navigatable.push({
+                  type: "sub",
+                  item: subItem,
+                  path: subItem.path,
+                  label: subItem.label,
+               });
+            });
+         }
+      });
+      return navigatable;
+   };
+
+   // Calculate filtered items and navigatable items
+   const filteredMenuItems = filterMenuItems(menuItems, searchTerm);
+   const navigatableItems = getAllNavigatableItems(filteredMenuItems);
+
+   // Auto-expand menus when search matches sub-items
+   useEffect(() => {
+      if (searchTerm) {
+         const newOpenMenus = new Set();
+         filteredMenuItems.forEach((item) => {
+            if (item.submenu) {
+               const hasMatchingSubItem = item.submenu.some((subItem) =>
+                  subItem.label.toLowerCase().includes(searchTerm.toLowerCase())
+               );
+               if (
+                  hasMatchingSubItem ||
+                  item.label.toLowerCase().includes(searchTerm.toLowerCase())
+               ) {
+                  newOpenMenus.add(item.label);
+               }
+            }
+         });
+         setOpenMenus(newOpenMenus);
+         setHighlightedIndex(-1);
+      }
+   }, [searchTerm, filteredMenuItems]); // Keyboard navigation
+   const handleKeyDown = useCallback(
+      (e) => {
+         if (
+            !searchInputRef.current ||
+            document.activeElement !== searchInputRef.current
+         ) {
+            return;
+         }
+
+         switch (e.key) {
+            case "ArrowDown":
+               e.preventDefault();
+               setHighlightedIndex((prev) =>
+                  prev < navigatableItems.length - 1 ? prev + 1 : 0
+               );
+               break;
+            case "ArrowUp":
+               e.preventDefault();
+               setHighlightedIndex((prev) =>
+                  prev > 0 ? prev - 1 : navigatableItems.length - 1
+               );
+               break;
+            case "Enter":
+               e.preventDefault();
+               if (
+                  highlightedIndex >= 0 &&
+                  navigatableItems[highlightedIndex]
+               ) {
+                  const selected = navigatableItems[highlightedIndex];
+                  handleNavigate(selected.path, selected.label);
+               }
+               break;
+            case "Escape":
+               e.preventDefault();
+               setSearchTerm("");
+               setHighlightedIndex(-1);
+               searchInputRef.current?.blur();
+               break;
+         }
+      },
+      [highlightedIndex, navigatableItems, handleNavigate]
+   );
+
+   useEffect(() => {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+   }, [handleKeyDown]); // Check if item should be highlighted
+   const isItemHighlighted = (path) => {
+      if (highlightedIndex < 0 || !navigatableItems[highlightedIndex])
+         return false;
+      return navigatableItems[highlightedIndex].path === path;
+   };
+
+   const SidebarContent = () => (
+      <div className='flex min-h-full flex-col bg-sidebar'>
+         <SidebarHeader />
+         {/* Search Bar */}
+         <SidebarSearch
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            onClear={() => {
+               setSearchTerm("");
+               setHighlightedIndex(-1);
+            }}
+            inputRef={searchInputRef}
+         />
+
+         {/* Search Results Info */}
+         {searchTerm && (
+            <div className='mx-4 mb-2 text-xs text-sidebar-foreground/60'>
+               {filteredMenuItems.length === 0
+                  ? "No results found"
+                  : `${navigatableItems.length} result${
+                       navigatableItems.length !== 1 ? "s" : ""
+                    } found`}
+            </div>
+         )}
+
+         {/* Navigation Menu */}
+         <div className='flex-1 space-y-2 px-4 py-2 overflow-y-auto'>
+            {filteredMenuItems.map((item) => {
+               const isMenuOpen = openMenus.has(item.label);
+               const isItemActive =
+                  item.path && location.pathname === item.path;
+               const hasActiveChild = item.submenu?.some(
+                  (subItem) => location.pathname === subItem.path
+               );
+               const isActive = isItemActive || hasActiveChild;
+               const isHighlighted = item.path && isItemHighlighted(item.path);
+
+               return item.submenu ? (
+                  <Collapsible
+                     key={item.label}
+                     open={isMenuOpen}
+                     onOpenChange={() => toggleMenu(item.label)}
+                  >
+                     <CollapsibleTrigger asChild>
+                        <MenuItem
+                           icon={item.icon}
+                           label={item.label}
+                           isActive={isActive}
+                           hasSubmenu={true}
+                           isOpen={isMenuOpen}
+                           isHighlighted={isHighlighted}
+                        />
+                     </CollapsibleTrigger>
+                     <CollapsibleContent className='space-y-1 mt-1'>
+                        {item.submenu.map((subItem) => (
+                           <SubMenuItem
+                              key={subItem.path}
+                              label={subItem.label}
+                              icon={subItem.icon}
+                              onClick={() =>
+                                 handleNavigate(subItem.path, subItem.label)
+                              }
+                              isActive={location.pathname === subItem.path}
+                              isHighlighted={isItemHighlighted(subItem.path)}
+                           />
+                        ))}
+                     </CollapsibleContent>
+                  </Collapsible>
+               ) : (
+                  <MenuItem
+                     key={item.label}
+                     icon={item.icon}
+                     label={item.label}
+                     onClick={() => handleNavigate(item.path, item.label)}
+                     isActive={isActive}
+                     isHighlighted={isHighlighted}
+                  />
+               );
+            })}
+         </div>
+
+         {/* Footer with Logout */}
+         <div className='sticky bottom-0 px-4 py-4 border-t border-sidebar-border bg-sidebar/95 backdrop-blur-sm'>
+            <Button
+               variant='ghost'
+               className='w-full gap-3 h-11 text-sidebar-foreground/80 hover:bg-destructive/10 hover:text-destructive transition-colors duration-200'
+               onClick={() => {
+                  logout();
+                  navigate("/login");
+               }}
+            >
+               <LogOut className='h-4 w-4' />
+               <span className='flex-1 text-left'>Logout</span>
+            </Button>
+         </div>
+      </div>
+   );
+   return (
+      <>
+         {/* Mobile Sidebar */}
+         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+            <SheetTrigger asChild className='lg:hidden'>
+               <Button
+                  variant='ghost'
+                  size='icon'
+                  className='md:hidden text-sidebar-foreground hover:bg-sidebar-accent'
+               >
+                  <Menu className='h-6 w-6' />
+                  <span className='sr-only'>Toggle sidebar</span>
+               </Button>
+            </SheetTrigger>
+            <SheetContent
+               side='left'
+               className='w-80 p-0 bg-sidebar border-sidebar-border'
+            >
+               <SidebarContent />
+            </SheetContent>
+         </Sheet>
+
+         {/* Desktop Sidebar */}
+         <div className='hidden h-screen fixed w-80 border-r border-sidebar-border bg-sidebar lg:block shadow-lg'>
+            <SidebarContent />
+         </div>
+      </>
+   );
+};
+
+export default Sidebar;

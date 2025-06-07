@@ -1,32 +1,64 @@
 import React from "react";
-import { Bell, User } from "lucide-react";
-import logoImage from "../assets/logo.png";
+import { Bell, User, ChevronDown } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const Header = () => {
+   const { state } = useSidebar();
+   const isCollapsed = state === "collapsed";
+
    return (
-      <div className='sticky top-0 z-50 bg-zinc-400 px-4 py-3'>
-         <div className='flex items-center justify-between max-w-[1400px] mx-auto'>
+      <>
+         <Separator orientation='vertical' className='mr-2 h-4' />
+         <div className='flex items-center justify-between flex-1'>
             <div className='flex items-center gap-3'>
-               {/* <img src={logoImage} alt="Logo" className="h-10 w-10" /> */}
-               <h2 className='text-lg font-semibold text-gray-900'>
-                  WorkNoFault
-               </h2>
+               {/* Show title only when sidebar is collapsed */}
+               {isCollapsed && (
+                  <div className='flex flex-col animate-in slide-in-from-left-2 duration-200'>
+                     <h1 className='text-xl font-bold text-foreground tracking-tight'>
+                        WorkNoFault
+                     </h1>
+                     <p className='text-xs text-muted-foreground font-medium'>
+                        Healthcare Management
+                     </p>
+                  </div>
+               )}
             </div>
 
-            <div className='flex items-center gap-4'>
-               <button className='p-2 hover:bg-gray-100 rounded-full relative'>
-                  <Bell className='h-5 w-5 text-gray-600' />
-                  <span className='absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full'></span>
+            <div className='flex items-center gap-3'>
+               {/* Search shortcut hint */}
+               {/* <div className='hidden md:flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-md text-xs text-muted-foreground'>
+                  <span>Search</span>
+                  <kbd className='pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100'>
+                     <span className='text-xs'>⌘</span>K
+                  </kbd>
+               </div> */}
+
+               {/* Notifications */}
+               <button className='relative p-2.5 hover:bg-accent/80 rounded-lg transition-colors duration-200 group'>
+                  <Bell className='h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors' />
+                  <span className='absolute top-1.5 right-1.5 h-2 w-2 bg-red-500 rounded-full animate-pulse'></span>
+                  <span className='absolute top-1.5 right-1.5 h-2 w-2 bg-red-500/30 rounded-full animate-ping'></span>
                </button>
 
-               <button className='flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full'>
-                  <div className='h-8 w-8 bg-gray-200 rounded-full flex items-center justify-center'>
-                     <User className='h-5 w-5 text-gray-600' />
+               {/* User Profile */}
+               <div className='flex items-center gap-2 p-1.5 hover:bg-accent/80 rounded-lg transition-colors duration-200 cursor-pointer group'>
+                  <div className='h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center ring-2 ring-background shadow-sm'>
+                     <User className='h-4 w-4 text-white' />
                   </div>
-               </button>
+                  <div className='hidden md:flex flex-col text-left'>
+                     <span className='text-sm font-medium text-foreground'>
+                        Dr. Smith
+                     </span>
+                     <span className='text-xs text-muted-foreground'>
+                        Administrator
+                     </span>
+                  </div>
+                  <ChevronDown className='h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors hidden md:block' />
+               </div>
             </div>
          </div>
-      </div>
+      </>
    );
 };
 
