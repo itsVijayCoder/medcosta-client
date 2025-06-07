@@ -13,58 +13,25 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 // Helper components for conditional animation
-const ConditionalMotion = ({
-   enableAnimations,
-   children,
-   className,
-   ...motionProps
-}) => {
+const ConditionalMotion = ({ enableAnimations, children, ...motionProps }) => {
    if (enableAnimations) {
-      return (
-         <motion.div className={className} {...motionProps}>
-            {children}
-         </motion.div>
-      );
+      return <motion.div {...motionProps}>{children}</motion.div>;
    }
-   return <div className={className}>{children}</div>;
+   return <div>{children}</div>;
 };
 
-const ConditionalAnimatePresence = ({
-   enableAnimations,
-   children,
-   ...props
-}) => {
+const ConditionalAnimatePresence = ({ enableAnimations, children, ...props }) => {
    if (enableAnimations) {
       return <AnimatePresence {...props}>{children}</AnimatePresence>;
    }
    return <>{children}</>;
 };
 
-const ConditionalMotionButton = ({
-   enableAnimations,
-   children,
-   className,
-   whileHover,
-   whileTap,
-   ...buttonProps
-}) => {
+const ConditionalMotionButton = ({ enableAnimations, children, ...motionProps }) => {
    if (enableAnimations) {
-      return (
-         <motion.button
-            className={className}
-            whileHover={whileHover}
-            whileTap={whileTap}
-            {...buttonProps}
-         >
-            {children}
-         </motion.button>
-      );
+      return <motion.button {...motionProps}>{children}</motion.button>;
    }
-   return (
-      <button className={className} {...buttonProps}>
-         {children}
-      </button>
-   );
+   return <button {...motionProps}>{children}</button>;
 };
 
 export function MultiStepForm({
@@ -74,7 +41,7 @@ export function MultiStepForm({
    className = "",
    showProgress = true,
    allowSkip = false,
-   enableAnimations = false,
+   enableAnimations = true,
 }) {
    const [currentStep, setCurrentStep] = useState(0);
    const [completedSteps, setCompletedSteps] = useState(new Set());
@@ -147,29 +114,13 @@ export function MultiStepForm({
                      <motion.div
                         className='absolute top-5 left-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full shadow-lg shadow-blue-500/30'
                         initial={enableAnimations ? { width: "0%" } : false}
-                        animate={
-                           enableAnimations
-                              ? {
-                                   width: `${
-                                      (currentStep / (steps.length - 1)) * 100
-                                   }%`,
-                                }
-                              : {}
-                        }
-                        transition={
-                           enableAnimations
-                              ? { duration: 0.6, ease: "easeInOut" }
-                              : { duration: 0 }
-                        }
-                        style={
-                           !enableAnimations
-                              ? {
-                                   width: `${
-                                      (currentStep / (steps.length - 1)) * 100
-                                   }%`,
-                                }
-                              : {}
-                        }
+                        animate={enableAnimations ? {
+                           width: `${
+                              (currentStep / (steps.length - 1)) * 100
+                           }%`,
+                        } : {}}
+                        transition={enableAnimations ? { duration: 0.6, ease: "easeInOut" } : { duration: 0 }}
+                        style={!enableAnimations ? { width: `${(currentStep / (steps.length - 1)) * 100}%` } : {}}
                      />
                   </div>
 
@@ -185,8 +136,7 @@ export function MultiStepForm({
                            transition={{ delay: index * 0.1, duration: 0.3 }}
                         >
                            {/* Step Circle with Enhanced Design */}
-                           <ConditionalMotionButton
-                              enableAnimations={enableAnimations}
+                           <motion.button
                               onClick={() => handleStepClick(index)}
                               disabled={
                                  !allowSkip &&
@@ -217,7 +167,7 @@ export function MultiStepForm({
                               whileTap={{ scale: 0.95 }}
                            >
                               {/* Background Animation for Active Step */}
-                              {index === currentStep && enableAnimations && (
+                              {index === currentStep && (
                                  <motion.div
                                     className='absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 rounded-full'
                                     animate={{
@@ -232,13 +182,9 @@ export function MultiStepForm({
                                  />
                               )}
 
-                              <ConditionalAnimatePresence
-                                 enableAnimations={enableAnimations}
-                                 mode='wait'
-                              >
+                              <AnimatePresence mode='wait'>
                                  {completedSteps.has(index) ? (
-                                    <ConditionalMotion
-                                       enableAnimations={enableAnimations}
+                                    <motion.div
                                        key='check'
                                        initial={{ scale: 0, rotate: -180 }}
                                        animate={{ scale: 1, rotate: 0 }}
@@ -246,10 +192,9 @@ export function MultiStepForm({
                                        transition={{ duration: 0.3 }}
                                     >
                                        <FaCheck className='w-5 h-5' />
-                                    </ConditionalMotion>
+                                    </motion.div>
                                  ) : (
-                                    <ConditionalMotion
-                                       enableAnimations={enableAnimations}
+                                    <motion.span
                                        key='number'
                                        initial={{ scale: 0 }}
                                        animate={{ scale: 1 }}
@@ -258,14 +203,13 @@ export function MultiStepForm({
                                        className='text-lg font-bold'
                                     >
                                        {index + 1}
-                                    </ConditionalMotion>
+                                    </motion.span>
                                  )}
-                              </ConditionalAnimatePresence>
-                           </ConditionalMotionButton>
+                              </AnimatePresence>
+                           </motion.button>
 
                            {/* Enhanced Step Label */}
-                           <ConditionalMotion
-                              enableAnimations={enableAnimations}
+                           <motion.div
                               className='mt-4 text-center max-w-[180px]'
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -302,24 +246,22 @@ export function MultiStepForm({
                               >
                                  {step.description || step.subtitle}
                               </div> */}
-                           </ConditionalMotion>
+                           </motion.div>
                         </ConditionalMotion>
                      ))}
                   </div>
 
                   {/* Mobile Compact Stepper */}
                   <div className='md:hidden'>
-                     <ConditionalMotion
-                        enableAnimations={enableAnimations}
+                     <motion.div
                         className='flex items-center justify-center space-x-2 mb-4'
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                      >
                         {steps.map((step, index) => (
-                           <ConditionalMotionButton
+                           <motion.button
                               key={index}
-                              enableAnimations={enableAnimations}
                               onClick={() => handleStepClick(index)}
                               disabled={
                                  !allowSkip &&
@@ -341,10 +283,9 @@ export function MultiStepForm({
                               whileTap={{ scale: 0.9 }}
                            />
                         ))}
-                     </ConditionalMotion>
+                     </motion.div>
 
-                     <ConditionalMotion
-                        enableAnimations={enableAnimations}
+                     <motion.div
                         className='text-center'
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -372,19 +313,15 @@ export function MultiStepForm({
                         <div className='text-xs text-gray-500 mt-2 bg-gray-100 px-3 py-1 rounded-full inline-block'>
                            Step {currentStep + 1} of {steps.length}
                         </div>
-                     </ConditionalMotion>
+                     </motion.div>
                   </div>
                </CardContent>
             </Card>
-         </ConditionalMotion>
+         </motion.div>
 
          {/* Enhanced Current Step Content */}
-         <ConditionalAnimatePresence
-            enableAnimations={enableAnimations}
-            mode='wait'
-         >
-            <ConditionalMotion
-               enableAnimations={enableAnimations}
+         <AnimatePresence mode='wait'>
+            <motion.div
                key={currentStep}
                initial={{ opacity: 0, x: 50, scale: 0.95 }}
                animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -403,8 +340,7 @@ export function MultiStepForm({
                      </div>
 
                      <div className='flex items-center justify-between relative z-10'>
-                        <ConditionalMotion
-                           enableAnimations={enableAnimations}
+                        <motion.div
                            initial={{ opacity: 0, y: 20 }}
                            animate={{ opacity: 1, y: 0 }}
                            transition={{ delay: 0.2, duration: 0.3 }}
@@ -417,7 +353,7 @@ export function MultiStepForm({
                                  {currentStepData.description}
                               </p>
                            )}
-                        </ConditionalMotion>
+                        </motion.div>
                         {/* {currentStepData?.badge && (
                            <motion.div
                               initial={{ opacity: 0, scale: 0.8 }}
@@ -436,8 +372,7 @@ export function MultiStepForm({
                   </CardHeader>
 
                   <CardContent className='p-8 min-h-[500px] bg-gradient-to-br from-white to-gray-50/30'>
-                     <ConditionalMotion
-                        enableAnimations={enableAnimations}
+                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3, duration: 0.4 }}
@@ -452,15 +387,14 @@ export function MultiStepForm({
                               isLastStep={isLastStep}
                            />
                         )}
-                     </ConditionalMotion>
+                     </motion.div>
                   </CardContent>
                </Card>
-            </ConditionalMotion>
-         </ConditionalAnimatePresence>
+            </motion.div>
+         </AnimatePresence>
 
          {/* Enhanced Navigation Buttons */}
-         <ConditionalMotion
-            enableAnimations={enableAnimations}
+         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.3 }}
@@ -468,8 +402,7 @@ export function MultiStepForm({
             <Card className='mt-8 border-0 shadow-xl bg-white/95 backdrop-blur-sm overflow-hidden'>
                <CardContent className='py-6 px-4 sm:px-8'>
                   <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
-                     <ConditionalMotion
-                        enableAnimations={enableAnimations}
+                     <motion.div
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                      >
@@ -490,12 +423,11 @@ export function MultiStepForm({
                            <FaChevronLeft className='w-4 h-4' />
                            Previous
                         </Button>
-                     </ConditionalMotion>
+                     </motion.div>
 
                      <div className='flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto'>
                         {/* Enhanced Progress indicator */}
-                        <ConditionalMotion
-                           enableAnimations={enableAnimations}
+                        <motion.div
                            className='flex items-center gap-3 sm:gap-4 text-sm text-gray-600 bg-gray-50 px-4 sm:px-6 py-2 sm:py-3 rounded-full'
                            initial={{ opacity: 0, scale: 0.9 }}
                            animate={{ opacity: 1, scale: 1 }}
@@ -507,38 +439,22 @@ export function MultiStepForm({
                            <div className='relative w-16 sm:w-20 h-2 bg-gray-200 rounded-full overflow-hidden'>
                               <motion.div
                                  className='absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-sm'
-                                 initial={
-                                    enableAnimations ? { width: "0%" } : false
-                                 }
-                                 animate={
-                                    enableAnimations
-                                       ? { width: `${progress}%` }
-                                       : {}
-                                 }
-                                 transition={
-                                    enableAnimations
-                                       ? {
-                                            duration: 0.6,
-                                            ease: "easeInOut",
-                                         }
-                                       : { duration: 0 }
-                                 }
-                                 style={
-                                    !enableAnimations
-                                       ? { width: `${progress}%` }
-                                       : {}
-                                 }
+                                 initial={{ width: "0%" }}
+                                 animate={{ width: `${progress}%` }}
+                                 transition={{
+                                    duration: 0.6,
+                                    ease: "easeInOut",
+                                 }}
                               />
                            </div>
                            <span className='font-bold text-blue-600 text-xs sm:text-sm'>
                               {Math.round(progress)}%
                            </span>
-                        </ConditionalMotion>
+                        </motion.div>
 
                         <div className='flex items-center gap-3'>
                            {allowSkip && !isLastStep && (
-                              <ConditionalMotion
-                                 enableAnimations={enableAnimations}
+                              <motion.div
                                  whileHover={{ scale: 1.02 }}
                                  whileTap={{ scale: 0.98 }}
                               >
@@ -549,11 +465,10 @@ export function MultiStepForm({
                                  >
                                     Skip
                                  </Button>
-                              </ConditionalMotion>
+                              </motion.div>
                            )}
 
-                           <ConditionalMotion
-                              enableAnimations={enableAnimations}
+                           <motion.div
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                            >
@@ -577,13 +492,13 @@ export function MultiStepForm({
                                     <FaArrowRight className='w-4 h-4' />
                                  </Button>
                               )}
-                           </ConditionalMotion>
+                           </motion.div>
                         </div>
                      </div>
                   </div>
                </CardContent>
             </Card>
-         </ConditionalMotion>
+         </motion.div>
       </div>
    );
 }

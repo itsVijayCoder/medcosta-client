@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MultiStepForm } from "@/components/ui/multi-step-form";
+import { Button } from "@/components/ui/button";
 import { PersonalInfoStep } from "@/components/form-steps/PersonalInfoStep";
 import { AccidentInfoStep } from "@/components/form-steps/AccidentInfoStep";
 import { InsuranceInfoStep } from "@/components/form-steps/InsuranceInfoStep";
@@ -9,6 +10,7 @@ import { User, FileText, Shield, Building2 } from "lucide-react";
 
 const PatientRegistration = () => {
    const navigate = useNavigate();
+   const [enableAnimations, setEnableAnimations] = useState(false);
    const [formData, setFormData] = useState({
       first_name: "",
       last_name: "",
@@ -91,6 +93,24 @@ const PatientRegistration = () => {
    };
    return (
       <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 sm:p-6 relative overflow-hidden'>
+         {/* Animation Toggle Button */}
+         <div className='fixed top-20 right-4 z-50'>
+            <Button
+               onClick={() => setEnableAnimations(!enableAnimations)}
+               variant={enableAnimations ? "default" : "outline"}
+               className={`
+                  px-4 py-2 text-sm font-semibold rounded-lg shadow-lg transition-all duration-300
+                  ${
+                     enableAnimations
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-300"
+                  }
+               `}
+            >
+               {enableAnimations ? "🎬 Animations ON" : "🎭 Animations OFF"}
+            </Button>
+         </div>
+
          {/* Enhanced Background Pattern */}
          <div className='absolute inset-0 opacity-30'>
             <div className='absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl animate-blob' />
@@ -107,8 +127,7 @@ const PatientRegistration = () => {
                   Complete the patient registration process step by step with
                   our modern, intuitive interface
                </p> */}
-            </div>
-
+            </div>{" "}
             <MultiStepForm
                steps={steps}
                initialData={formData}
@@ -117,6 +136,7 @@ const PatientRegistration = () => {
                onCancel={() => navigate(-1)}
                submitButtonText='Complete Registration'
                className='rounded-xl bg-transparent backdrop-blur-sm'
+               enableAnimations={enableAnimations}
             />
          </div>
       </div>
