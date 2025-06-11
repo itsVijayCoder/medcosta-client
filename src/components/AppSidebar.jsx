@@ -16,6 +16,8 @@ import {
    Search,
    X,
    ChevronRight,
+   User,
+   ChevronDown,
 } from "lucide-react";
 
 import {
@@ -520,7 +522,23 @@ export function AppSidebar({ setRouteName, ...props }) {
             </div>
 
             <SidebarMenu className='relative z-10'>
-               <SidebarMenuItem>
+               <SidebarMenuItem className='space-y-1'>
+                  <div className='flex items-center justify-between gap-2 p-1.5 hover:bg-accent/80 rounded-lg transition-colors duration-200 cursor-pointer group'>
+                     <div className='flex items-center gap-2'>
+                        <div className='h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center ring-2 ring-background shadow-sm'>
+                           <User className='h-4 w-4 text-white' />
+                        </div>
+                        <div className='hidden md:flex flex-col text-left'>
+                           <span className='text-sm font-medium text-foreground'>
+                              Dr. Smith
+                           </span>
+                           <span className='text-xs text-muted-foreground'>
+                              Administrator
+                           </span>
+                        </div>
+                     </div>
+                     <ChevronRight className='h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors hidden md:block' />
+                  </div>
                   <SidebarMenuButton
                      onClick={() => {
                         logout();
