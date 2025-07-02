@@ -12,11 +12,12 @@ import {
    CardFooter,
 } from "@/components/ui/card";
 import { AuthContext } from "@/App";
+import { authService } from "@/services/authService";
 import logo from "@/assets/medcosta-login.jpg";
 
 export default function Login() {
    const [formData, setFormData] = useState({
-      username: "",
+      email: "",
       password: "",
    });
 
@@ -43,27 +44,20 @@ export default function Login() {
       setError("");
 
       try {
-         // TODO: Replace with actual API authentication
-         console.log("Logging in with:", formData);
+         const { data, error: authError } = await authService.signIn(
+            formData.email,
+            formData.password
+         );
 
-         // Simulate API call delay
-         await new Promise((resolve) => setTimeout(resolve, 1000));
-
-         // For demo purposes
-         if (formData.username && formData.password) {
-            // Generate a mock token - in a real app, this would come from your backend
-            // Using a proper format for the token that our system can parse
-            const mockToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IiR7Zm9ybURhdGEudXNlcm5hbWV9IiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzkwMjJ9.${Date.now()}`;
-            // Use the login function from AuthContext
-            login(mockToken);
-
-            // Redirect to the original path the user was trying to access (or dashboard if direct login)
-            navigate(from, { replace: true });
-         } else {
-            throw new Error("Please enter both username and password");
+         if (authError) {
+            setError(authError);
+            return;
          }
+
+         // Redirect to the original path the user was trying to access (or dashboard if direct login)
+         navigate(from, { replace: true });
       } catch (err) {
-         setError(err.message || "Invalid username or password");
+         setError(err.message || "An error occurred during login");
          console.error("Login error:", err);
       } finally {
          setIsLoading(false);
@@ -126,18 +120,18 @@ export default function Login() {
                      <form onSubmit={handleSubmit} className='space-y-5'>
                         <div className='space-y-2'>
                            <Label
-                              htmlFor='username'
+                              htmlFor='email'
                               className='text-gray-900 dark:text-white'
                            >
-                              Username
+                              Email
                            </Label>
                            <div className='relative'>
                               <Input
-                                 id='username'
-                                 name='username'
-                                 placeholder='Enter your username'
-                                 type='text'
-                                 value={formData.username}
+                                 id='email'
+                                 name='email'
+                                 placeholder='Enter your email'
+                                 type='email'
+                                 value={formData.email}
                                  onChange={handleInputChange}
                                  required
                                  className='pl-10 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500'
