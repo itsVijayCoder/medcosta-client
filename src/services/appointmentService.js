@@ -474,4 +474,22 @@ export const appointmentService = {
          return { data: null, error: handleSupabaseError(error) };
       }
    },
+
+   /**
+    * Get appointment count for a specific patient
+    */
+   async getPatientAppointmentCount(patientId) {
+      try {
+         const { count, error } = await supabase
+            .from("appointments")
+            .select("*", { count: "exact", head: true })
+            .eq("patient_id", patientId);
+
+         if (error) throw error;
+
+         return { data: count, error: null };
+      } catch (error) {
+         return { data: 0, error: handleSupabaseError(error) };
+      }
+   },
 };

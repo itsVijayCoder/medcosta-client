@@ -561,4 +561,49 @@ export const patientService = {
          return { data: null, error: handleSupabaseError(error) };
       }
    },
+
+   /**
+    * Search for patients by criteria
+    */
+   async searchPatients(searchCriteria) {
+      try {
+         let query = supabase.from("patients").select(`
+               *,
+               patient_insurance (
+                  *,
+                  insurance_companies (*)
+               ),
+               patient_employers (*)
+            `);
+
+         // Apply search filters
+         if (searchCriteria.first_name) {
+            query = query.ilike("first_name", `%${searchCriteria.first_name}%`);
+         }
+
+         if (searchCriteria.last_name) {
+            query = query.ilike("last_name", `%${searchCriteria.last_name}%`);
+         }
+
+         if (searchCriteria.date_of_birth) {
+            query = query.eq("date_of_birth", searchCriteria.date_of_birth);
+         }
+
+         if (searchCriteria.ssn) {
+            query = query.eq("ssn", searchCriteria.ssn);
+         }
+
+         if (searchCriteria.patient_number) {
+            query = query.eq("patient_number", searchCriteria.patient_number);
+         }
+
+         const { data, error } = await query.limit(10);
+
+         if (error) throw error;
+
+         return { data: data || [], error: null };
+      } catch (error) {
+         return { data: [], error: handleSupabaseError(error) };
+      }
+   },
 };
