@@ -105,7 +105,9 @@ function App() {
             logout,
          }}
       >
-         <Routing />
+         <main className='bg-primary/20 min-h-screen text-foreground'>
+            <Routing />
+         </main>
       </AuthContext.Provider>
    );
 }

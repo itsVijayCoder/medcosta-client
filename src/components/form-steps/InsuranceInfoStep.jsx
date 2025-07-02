@@ -30,26 +30,26 @@ export function InsuranceInfoStep({ data, onDataChange }) {
    return (
       <div className='space-y-6'>
          <div className='flex items-center space-x-3 mb-6'>
-            <div className='p-2 bg-green-100 rounded-lg'>
-               <Shield className='h-6 w-6 text-green-600' />
+            <div className='p-2 bg-success/10 rounded-lg'>
+               <Shield className='h-6 w-6 text-success' />
             </div>
             <div>
-               <h3 className='text-lg font-semibold text-gray-900'>
+               <h3 className='text-lg font-semibold text-foreground'>
                   Insurance Information
                </h3>
-               <p className='text-gray-600'>
+               <p className='text-muted-foreground'>
                   Please provide insurance coverage details
                </p>
             </div>
          </div>
 
-         <Card className='border-0 shadow-sm bg-gradient-to-br from-green-50 to-emerald-50'>
+         <Card className='border-0 shadow-sm bg-card/80'>
             <CardContent className='p-6'>
                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                   <div className='md:col-span-2 space-y-2'>
                      <Label
                         htmlFor='insurance_name'
-                        className='text-sm font-medium text-gray-700'
+                        className='text-sm font-medium'
                      >
                         Insurance Provider *
                      </Label>
@@ -65,10 +65,7 @@ export function InsuranceInfoStep({ data, onDataChange }) {
                   </div>
 
                   <div className='space-y-2'>
-                     <Label
-                        htmlFor='claim'
-                        className='text-sm font-medium text-gray-700'
-                     >
+                     <Label htmlFor='claim' className='text-sm font-medium'>
                         Claim Number
                      </Label>
                      <Input
@@ -84,7 +81,7 @@ export function InsuranceInfoStep({ data, onDataChange }) {
                   <div className='space-y-2'>
                      <Label
                         htmlFor='policy_number'
-                        className='text-sm font-medium text-gray-700'
+                        className='text-sm font-medium'
                      >
                         Policy Number *
                      </Label>

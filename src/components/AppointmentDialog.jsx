@@ -118,7 +118,7 @@ const AppointmentDialog = ({
                                     <SelectItem
                                        key={time}
                                        value={time}
-                                       className='cursor-pointer hover:bg-blue-50'
+                                       className='cursor-pointer hover:bg-primary-50'
                                     >
                                        ⏰ {displayTime}
                                     </SelectItem>
@@ -310,7 +310,7 @@ const AppointmentDialog = ({
                         {doctors.map((doctor) => (
                            <SelectItem key={doctor.id} value={doctor.name}>
                               <div className='flex items-center gap-2'>
-                                 <span className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600'>
+                                 <span className='w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-sm font-medium text-primary-600'>
                                     {doctor.avatar}
                                  </span>
                                  <div>
@@ -327,7 +327,7 @@ const AppointmentDialog = ({
                      </SelectContent>
                   </Select>
                   {doctors.length === 0 && (
-                     <p className='text-xs text-red-500 mt-1'>
+                     <p className='text-xs text-error-500 mt-1'>
                         No doctors available. Please check the providers data.
                      </p>
                   )}
@@ -347,7 +347,7 @@ const AppointmentDialog = ({
                      onSubmit();
                   }}
                   disabled={loading}
-                  className='px-6 bg-blue-600 hover:bg-blue-700 disabled:opacity-50'
+                  className='px-6 bg-primary hover:bg-primary/90 disabled:opacity-50'
                >
                   {loading ? "Creating..." : "Confirm Appointment"}
                </Button>

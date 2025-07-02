@@ -193,12 +193,10 @@ const GenericTable = ({
    };
 
    return (
-      <div className={`min-h-screen ${backgroundColor} p-6`}>
+      <div className='min-h-screen  dark:bg-gray-950 p-6'>
          <div className='container mx-auto max-w-7xl'>
-            <Card className='shadow-2xl border-0 backdrop-blur-sm bg-white/80'>
-               <CardHeader
-                  className={`${gradientColors} text-white rounded-t-lg`}
-               >
+            <Card className='shadow-2xl border-0 backdrop-blur-sm bg-primary/10  dark:bg-gray-950'>
+               <CardHeader className={` text-primary rounded-t-lg`}>
                   <div className='flex items-center justify-between'>
                      <div className='flex items-center gap-3'>
                         <div className='p-2 bg-white/20 rounded-lg'>
@@ -208,13 +206,13 @@ const GenericTable = ({
                            <CardTitle className='text-2xl font-bold'>
                               {title}
                            </CardTitle>
-                           <p className='text-white/80 mt-1'>{subtitle}</p>
+                           <p className='text-primary/80 mt-1'>{subtitle}</p>
                         </div>
                      </div>
                      {showAddButton && (
                         <Modal
                            trigger={
-                              <Button className='bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm'>
+                              <Button className='bg-primary/80 hover:bg-primary/90 text-primary-foreground border-primary-foreground/30 backdrop-blur-sm'>
                                  <FaPlus className='mr-2 h-4 w-4' /> Add{" "}
                                  {title.split(" ")[0]}
                               </Button>
@@ -231,7 +229,7 @@ const GenericTable = ({
                                           field.fullWidth ? "col-span-full" : ""
                                        }
                                     >
-                                       <label className='block text-sm font-medium text-gray-700 mb-2'>
+                                       <label className='block text-sm font-medium text-foreground mb-2'>
                                           {field.label}
                                        </label>
                                        {renderFormField(field)}
@@ -240,7 +238,7 @@ const GenericTable = ({
                               <div className='col-span-full flex justify-end mt-4'>
                                  <Button
                                     onClick={handleAddRecord}
-                                    className={`${gradientColors} hover:opacity-90`}
+                                    className={`hover:opacity-90`}
                                  >
                                     Save {title.split(" ")[0]}
                                  </Button>

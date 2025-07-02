@@ -155,7 +155,7 @@ export function ModernDataTable({
       selectedRows.size > 0 && selectedRows.size < filteredData.length;
 
    return (
-      <Card className={`w-full border-none ${className}`}>
+      <Card className={`w-full ${className}`}>
          <CardHeader>
             <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
                <CardTitle className='text-xl font-semibold'>{title}</CardTitle>
@@ -164,7 +164,7 @@ export function ModernDataTable({
                   {/* Search */}
                   {searchable && (
                      <div className='relative'>
-                        <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+                        <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
                         <Input
                            placeholder='Search...'
                            value={searchTerm}
@@ -227,7 +227,7 @@ export function ModernDataTable({
 
          <CardContent>
             {filteredData.length === 0 ? (
-               <div className='text-center py-12 text-gray-500'>
+               <div className='text-center py-12 text-muted-foreground'>
                   <p className='text-lg'>{emptyMessage}</p>
                </div>
             ) : (
@@ -279,8 +279,8 @@ export function ModernDataTable({
                         {filteredData.map((row) => (
                            <TableRow
                               key={row.id}
-                              className={`hover:bg-gray-50 transition-colors ${
-                                 selectedRows.has(row.id) ? "bg-blue-50" : ""
+                              className={`hover:bg-muted transition-colors ${
+                                 selectedRows.has(row.id) ? "bg-primary/10" : ""
                               }`}
                            >
                               {/* Bulk Select Cell */}
@@ -348,7 +348,7 @@ export function ModernDataTable({
                                                 onClick={onSave}
                                                 className='h-8 w-8 p-0'
                                              >
-                                                <FaSave className='h-4 w-4 text-green-600' />
+                                                <FaSave className='h-4 w-4 text-success' />
                                              </Button>
                                              <Button
                                                 size='sm'
@@ -356,7 +356,7 @@ export function ModernDataTable({
                                                 onClick={() => onEdit?.(null)}
                                                 className='h-8 w-8 p-0'
                                              >
-                                                <FaTimes className='h-4 w-4 text-gray-600' />
+                                                <FaTimes className='h-4 w-4 text-muted-foreground' />
                                              </Button>
                                           </>
                                        ) : (
@@ -369,7 +369,7 @@ export function ModernDataTable({
                                                 }
                                                 className='h-8 w-8 p-0'
                                              >
-                                                <FaEdit className='h-4 w-4 text-blue-600' />
+                                                <FaEdit className='h-4 w-4 text-primary' />
                                              </Button>
                                              <Button
                                                 size='sm'
@@ -379,7 +379,7 @@ export function ModernDataTable({
                                                 }
                                                 className='h-8 w-8 p-0'
                                              >
-                                                <FaTrash className='h-4 w-4 text-red-600' />
+                                                <FaTrash className='h-4 w-4 text-destructive' />
                                              </Button>
                                           </>
                                        )}

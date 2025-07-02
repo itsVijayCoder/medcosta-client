@@ -510,19 +510,19 @@ const NewAppointment = () => {
    };
 
    return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 relative overflow-hidden'>
+      <div className='min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-6 relative overflow-hidden'>
          {/* Beautiful Background Pattern */}
          <div className='absolute inset-0 opacity-30'>
-            <div className='absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl animate-blob' />
-            <div className='absolute top-40 right-10 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000' />
-            <div className='absolute bottom-20 left-20 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000' />
+            <div className='absolute top-20 left-10 w-72 h-72 bg-green-400 rounded-full mix-blend-multiply filter blur-xl animate-blob' />
+            <div className='absolute top-40 right-10 w-72 h-72 bg-secondary-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000' />
+            <div className='absolute bottom-20 left-20 w-72 h-72 bg-accent-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000' />
          </div>
 
          <div className='max-w-[1400px] mx-auto space-y-6 relative z-10'>
             {/* Header */}
             <div className='flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg border-0'>
                <div>
-                  <h1 className='text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent'>
+                  <h1 className='text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent'>
                      📅 Appointments
                   </h1>
                   <p className='text-gray-600 mt-2 text-lg'>
@@ -530,7 +530,7 @@ const NewAppointment = () => {
                   </p>
                </div>
                <Button
-                  className='bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 text-white px-6 py-3 text-lg rounded-lg'
+                  className='bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200 text-white px-6 py-3 text-lg rounded-lg'
                   onClick={() => {
                      // Set default date and time when opening dialog
                      const defaultDateTime = new Date();
@@ -548,7 +548,7 @@ const NewAppointment = () => {
                <div className='lg:col-span-9'>
                   <Card className='shadow-lg border-0 bg-white/80 backdrop-blur-sm'>
                      <CardContent className='p-0'>
-                        <div className='bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-t-lg'>
+                        <div className='bg-gradient-to-r from-green-600 to-emerald-600 p-4 rounded-t-lg'>
                            <h2 className='text-xl font-semibold text-white'>
                               📅 Appointment Calendar
                            </h2>
@@ -575,17 +575,17 @@ const NewAppointment = () => {
                               allDaySlot={false}
                               slotDuration='00:30:00'
                               eventContent={(eventInfo) => (
-                                 <div className='p-2 text-xs rounded-md bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-sm border-l-4 border-white'>
+                                 <div className='p-2 text-xs rounded-md bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm border-l-4 border-white'>
                                     <div className='font-semibold flex items-center gap-1'>
                                        <span className='inline-block w-2 h-2 bg-white rounded-full'></span>
                                        {eventInfo.event.title}
                                     </div>
-                                    <div className='mt-1 text-blue-100'>
+                                    <div className='mt-1 text-green-100'>
                                        ⏰{" "}
                                        {format(eventInfo.event.start, "h:mm a")}
                                     </div>
                                     {eventInfo.event.extendedProps?.patient && (
-                                       <div className='mt-1 text-blue-100 text-xs'>
+                                       <div className='mt-1 text-green-100 text-xs'>
                                           📞{" "}
                                           {eventInfo.event.extendedProps.patient
                                              .home_phone || "No phone"}
@@ -616,7 +616,7 @@ const NewAppointment = () => {
                {/* Sidebar */}
                <div className='lg:col-span-3 space-y-6'>
                   {/* Today's Appointments */}
-                  <Card className='shadow-lg border-0 bg-gradient-to-br from-white to-blue-50'>
+                  <Card className='shadow-lg border-0 bg-gradient-to-br from-white to-green-50'>
                      <CardHeader className='bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-t-lg'>
                         <CardTitle className='text-lg font-semibold flex items-center gap-2'>
                            📋 Today's Appointments
@@ -666,8 +666,8 @@ const NewAppointment = () => {
                   </Card>
 
                   {/* Quick Stats */}
-                  <Card className='shadow-lg border-0 bg-gradient-to-br from-white to-purple-50'>
-                     <CardHeader className='bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-t-lg'>
+                  <Card className='shadow-lg border-0 bg-gradient-to-br from-white to-emerald-50'>
+                     <CardHeader className='bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-t-lg'>
                         <CardTitle className='text-lg font-semibold flex items-center gap-2'>
                            📊 Overview
                         </CardTitle>
@@ -681,7 +681,7 @@ const NewAppointment = () => {
                                     Today's Appointments
                                  </span>
                               </div>
-                              <span className='font-bold text-xl text-purple-600'>
+                              <span className='font-bold text-xl text-secondary-600'>
                                  {
                                     appointments.filter(
                                        (apt) =>
@@ -698,7 +698,7 @@ const NewAppointment = () => {
                                     Total Doctors
                                  </span>
                               </div>
-                              <span className='font-bold text-xl text-purple-600'>
+                              <span className='font-bold text-xl text-accent-600'>
                                  {doctors.length}
                               </span>
                            </div>
@@ -709,7 +709,7 @@ const NewAppointment = () => {
                                     Total Appointments
                                  </span>
                               </div>
-                              <span className='font-bold text-xl text-purple-600'>
+                              <span className='font-bold text-xl text-primary-600'>
                                  {appointments.length}
                               </span>
                            </div>

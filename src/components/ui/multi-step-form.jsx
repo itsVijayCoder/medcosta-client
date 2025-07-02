@@ -146,7 +146,7 @@ export function MultiStepForm({
                transition={{ duration: 0.4, ease: "easeInOut" }}
             >
                <Card className='border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden'>
-                  <CardHeader className='bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-b border-gray-100/50 relative overflow-hidden'>
+                  <CardHeader className=' border-b border-gray-100/50 relative overflow-hidden'>
                      {/* Animated background pattern */}
                      <div className='absolute inset-0 opacity-30'>
                         <div className='absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(59,130,246,0.1),transparent_50%)] animate-pulse' />
@@ -163,7 +163,7 @@ export function MultiStepForm({
                            animate={{ opacity: 1, y: 0 }}
                            transition={{ delay: 0.2, duration: 0.3 }}
                         >
-                           <CardTitle className='text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-2'>
+                           <CardTitle className='text-3xl font-bold bg-gradient-to-r from-primary via-primary/60 to-primary/70 bg-clip-text text-transparent mb-2'>
                               {currentStepData?.title}
                            </CardTitle>
                            {currentStepData?.description && (
@@ -219,13 +219,13 @@ export function MultiStepForm({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
          >
-            <Card className=' border-0 shadow-xl bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/40 backdrop-blur-sm overflow-hidden'>
+            <Card className=' border-0 shadow-xl bg-gradient-to-br from-white via-primary/10 to-primary/20 backdrop-blur-sm overflow-hidden'>
                <CardContent className=' pb-6 px-4 sm:px-8'>
                   {/* Progress Bar Background */}
                   <div className='relative mb-8'>
                      <div className='absolute top-5 left-0 right-0 h-1 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-full' />
                      <motion.div
-                        className='absolute top-5 left-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full shadow-lg shadow-blue-500/30'
+                        className='absolute top-5 left-0 h-1 bg-gradient-to-r from-primary via-primary/70 to-primary/20 rounded-full shadow-lg shadow-blue-500/30'
                         initial={enableAnimations ? { width: "0%" } : false}
                         animate={
                            enableAnimations
@@ -478,16 +478,16 @@ export function MultiStepForm({
                            onClick={handlePrevious}
                            disabled={isFirstStep}
                            className={`
-                              flex items-center gap-3 px-6 sm:px-8 py-3 border-2 text-base font-semibold
+                              flex group items-center gap-3 px-6 sm:px-8 py-3 border-2 text-base font-semibold
                               transition-all duration-300 rounded-xl w-full sm:w-auto
                               ${
                                  isFirstStep
                                     ? "opacity-50 cursor-not-allowed border-gray-200 text-gray-400"
-                                    : "border-gray-300 text-gray-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 hover:shadow-lg transform hover:-translate-y-0.5"
+                                    : "border-primary/30 text-primary hover:border-primary/30 hover:bg-primary/10 hover:text-primary hover:shadow-lg transform hover:-translate-y-0.5"
                               }
                            `}
                         >
-                           <FaChevronLeft className='w-4 h-4' />
+                           <FaChevronLeft className='w-4 h-4 group-hover:-translate-x-1 duration-200' />
                            Previous
                         </Button>
                      </ConditionalMotion>
@@ -506,7 +506,7 @@ export function MultiStepForm({
                            </span>
                            <div className='relative w-16 sm:w-20 h-2 bg-gray-200 rounded-full overflow-hidden'>
                               <motion.div
-                                 className='absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-sm'
+                                 className='absolute left-0 top-0 h-full bg-gradient-to-r from-primary/90 to-primary/30 rounded-full shadow-sm'
                                  initial={
                                     enableAnimations ? { width: "0%" } : false
                                  }
@@ -530,7 +530,7 @@ export function MultiStepForm({
                                  }
                               />
                            </div>
-                           <span className='font-bold text-blue-600 text-xs sm:text-sm'>
+                           <span className='font-bold text-primary text-xs sm:text-sm'>
                               {Math.round(progress)}%
                            </span>
                         </ConditionalMotion>
@@ -571,10 +571,10 @@ export function MultiStepForm({
                               ) : (
                                  <Button
                                     onClick={handleNext}
-                                    className='flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 sm:px-10 py-3 text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl transform hover:-translate-y-0.5'
+                                    className='group flex items-center gap-3 bg-gradient-to-r from-primary to-primary/70 hover:from-primary/70 hover:to-primary/70 text-white px-8 sm:px-10 py-3 text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl transform hover:-translate-y-0.5'
                                  >
                                     Continue
-                                    <FaArrowRight className='w-4 h-4' />
+                                    <FaArrowRight className='w-4 h-4 group-hover:translate-x-1 duration-200' />
                                  </Button>
                               )}
                            </ConditionalMotion>

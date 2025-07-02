@@ -163,9 +163,9 @@ const PatientRegistration = () => {
    };
 
    return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 sm:p-6 relative overflow-hidden'>
+      <div className='min-h-screen bg-primary-gradient p-4 sm:p-6 relative overflow-hidden'>
          {/* Animation Toggle Button */}
-         <div className='fixed top-20 right-4 z-50 space-y-2'>
+         {/* <div className='fixed top-20 right-4 z-50 space-y-2'>
             <Button
                onClick={() => setEnableAnimations(!enableAnimations)}
                variant={enableAnimations ? "default" : "outline"}
@@ -173,8 +173,8 @@ const PatientRegistration = () => {
                   px-4 py-2 text-sm font-semibold rounded-lg shadow-lg transition-all duration-300
                   ${
                      enableAnimations
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-300"
+                        ? "bg-primary/10 text-primary-foreground hover:bg-primary/20"
+                        : "bg-background hover:bg-muted text-foreground border-2 border-border"
                   }
                `}
             >
@@ -184,25 +184,25 @@ const PatientRegistration = () => {
             <Button
                onClick={testPermissions}
                variant='outline'
-               className='block w-full px-4 py-2 text-sm font-semibold rounded-lg shadow-lg bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
+               className='block w-full px-4 py-2 text-sm font-semibold rounded-lg shadow-lg bg-warning-soft hover:bg-warning-soft/80 text-warning-strong border-2 border-warning'
             >
                🔐 Test Permissions
             </Button>
-         </div>
+         </div> */}
 
          {/* Enhanced Background Pattern */}
          <div className='absolute inset-0 opacity-30'>
-            <div className='absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl animate-blob' />
-            <div className='absolute top-40 right-10 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000' />
-            <div className='absolute bottom-20 left-20 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000' />
+            <div className='absolute top-20 left-10 w-72 h-72 bg-primary/40 rounded-full mix-blend-multiply filter blur-xl animate-blob' />
+            <div className='absolute top-40 right-10 w-72 h-72 bg-secondary/40 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000' />
+            <div className='absolute bottom-20 left-20 w-72 h-72 bg-accent/40 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000' />
          </div>
 
          <div className='max-w-5xl mx-auto relative z-10'>
             <div className='text-center mb-8 sm:mb-12'>
-               <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-3 sm:mb-4 pb-2'>
+               {/* <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground via-primary to-primary/80 bg-clip-text text-transparent mb-3 sm:mb-4 pb-2'>
                   Patient Registration
-               </h1>
-               {/* <p className='text-lg sm:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto'>
+               </h1> */}
+               {/* <p className='text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto'>
                   Complete the patient registration process step by step with
                   our modern, intuitive interface
                </p> */}
@@ -214,7 +214,7 @@ const PatientRegistration = () => {
                onSubmit={handleSubmit}
                onCancel={() => navigate(-1)}
                submitButtonText='Complete Registration'
-               className='rounded-xl bg-transparent backdrop-blur-sm'
+               className='rounded-xl bg-card/50 backdrop-blur-sm'
                enableAnimations={enableAnimations}
             />
          </div>

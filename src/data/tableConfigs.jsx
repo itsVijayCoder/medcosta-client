@@ -51,8 +51,8 @@ export const tableConfigs = {
       title: "Provider Management",
       subtitle: "Manage healthcare providers and their credentials",
       icon: FaUserMd,
-      gradientColors: "bg-gradient-to-r from-cyan-600 to-blue-600",
-      backgroundColor: "bg-gradient-to-br from-cyan-50 via-blue-50 to-cyan-100",
+      gradientColors: "bg-primary-gradient",
+      backgroundColor: "",
       searchPlaceholder: "Search providers...",
       emptyMessage: "No provider records found",
       columns: [
@@ -60,7 +60,7 @@ export const tableConfigs = {
             header: "Provider Name",
             accessorKey: "name",
             cell: ({ row }) => (
-               <div className='font-semibold text-cyan-700'>
+               <div className='font-semibold text-primary-700'>
                   {row.getValue("name")}
                </div>
             ),
@@ -69,7 +69,7 @@ export const tableConfigs = {
             header: "Location",
             accessorKey: "location",
             cell: ({ row }) => (
-               <span className='px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800'>
+               <span className='px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800'>
                   {row.getValue("location")}
                </span>
             ),
@@ -139,9 +139,8 @@ export const tableConfigs = {
       title: "Modifier Management",
       subtitle: "Manage medical procedure modifiers and codes",
       icon: FaCode,
-      gradientColors: "bg-gradient-to-r from-teal-600 to-green-600",
-      backgroundColor:
-         "bg-gradient-to-br from-teal-50 via-green-50 to-emerald-100",
+      gradientColors: "bg-primary-gradient",
+      backgroundColor: "",
       searchPlaceholder: "Search modifiers...",
       emptyMessage: "No modifier records found",
       columns: [
@@ -149,7 +148,7 @@ export const tableConfigs = {
             header: "Modifier Code",
             accessorKey: "modifier_code",
             cell: ({ row }) => (
-               <div className='font-mono font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded'>
+               <div className='font-mono font-semibold text-secondary-700 bg-secondary-50 px-2 py-1 rounded'>
                   {row.getValue("modifier_code")}
                </div>
             ),
@@ -191,7 +190,7 @@ export const tableConfigs = {
                <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
                      row.getValue("is_default") === "Yes"
-                        ? "bg-yellow-100 text-yellow-800"
+                        ? "bg-warning-100 text-warning-800"
                         : "bg-gray-100 text-gray-600"
                   }`}
                >
@@ -257,7 +256,7 @@ export const tableConfigs = {
       title: "Procedure Management",
       subtitle: "Manage medical procedures and billing codes",
       icon: FaStethoscope,
-      gradientColors: "bg-gradient-to-r from-orange-600 to-red-600",
+      gradientColors: "bg-primary-gradient",
       backgroundColor:
          "bg-gradient-to-br from-orange-50 via-red-50 to-pink-100",
       searchPlaceholder: "Search procedures...",
@@ -267,7 +266,7 @@ export const tableConfigs = {
             header: "CPT Code",
             accessorKey: "cpt_code",
             cell: ({ row }) => (
-               <div className='font-mono font-semibold text-orange-700 bg-orange-50 px-2 py-1 rounded'>
+               <div className='font-mono font-semibold text-accent-700 bg-accent-50 px-2 py-1 rounded'>
                   {row.getValue("cpt_code")}
                </div>
             ),
@@ -332,7 +331,7 @@ export const tableConfigs = {
       title: "Diagnosis Management",
       subtitle: "Manage medical diagnoses and ICD codes",
       icon: FaClipboardList,
-      gradientColors: "bg-gradient-to-r from-purple-600 to-pink-600",
+      gradientColors: "bg-primary-gradient",
       backgroundColor:
          "bg-gradient-to-br from-purple-50 via-pink-50 to-rose-100",
       searchPlaceholder: "Search diagnoses...",
@@ -342,7 +341,7 @@ export const tableConfigs = {
             header: "ICD Code",
             accessorKey: "icd_code",
             cell: ({ row }) => (
-               <div className='font-mono font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded'>
+               <div className='font-mono font-semibold text-primary-700 bg-primary-50 px-2 py-1 rounded'>
                   {row.getValue("icd_code")}
                </div>
             ),
@@ -363,7 +362,7 @@ export const tableConfigs = {
                <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
                      row.getValue("diagnosis_type") === "Primary"
-                        ? "bg-purple-100 text-purple-800"
+                        ? "bg-primary-100 text-primary-800"
                         : row.getValue("diagnosis_type") === "Secondary"
                         ? "bg-pink-100 text-pink-800"
                         : "bg-gray-100 text-gray-700"
@@ -383,7 +382,7 @@ export const tableConfigs = {
                         ? "bg-green-100 text-green-800"
                         : row.getValue("status") === "Inactive"
                         ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
+                        : "bg-warning-100 text-warning-800"
                   }`}
                >
                   {row.getValue("status")}
@@ -425,9 +424,8 @@ export const tableConfigs = {
       title: "Insurance Management",
       subtitle: "Manage insurance providers and coverage details",
       icon: FaShieldAlt,
-      gradientColors: "bg-gradient-to-r from-blue-600 to-indigo-600",
-      backgroundColor:
-         "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100",
+      gradientColors: "bg-primary-gradient",
+      backgroundColor: "",
       searchPlaceholder: "Search insurance providers...",
       emptyMessage: "No insurance records found",
       columns: [
@@ -435,7 +433,7 @@ export const tableConfigs = {
             header: "Insurance Name",
             accessorKey: "name",
             cell: ({ row }) => (
-               <div className='font-semibold text-blue-700'>
+               <div className='font-semibold text-primary-700'>
                   {row.getValue("name")}
                </div>
             ),
@@ -497,7 +495,7 @@ export const tableConfigs = {
       title: "Location Management",
       subtitle: "Manage medical facility locations and details",
       icon: FaMapMarkerAlt,
-      gradientColors: "bg-gradient-to-r from-green-600 to-teal-600",
+      gradientColors: "bg-primary-gradient",
       backgroundColor:
          "bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50",
       searchPlaceholder: "Search locations...",
@@ -517,7 +515,7 @@ export const tableConfigs = {
             header: "NPI",
             accessorKey: "npi",
             cell: ({ row }) => (
-               <div className='text-sm font-mono bg-blue-100 px-2 py-1 rounded'>
+               <div className='text-sm font-mono bg-primary-100 px-2 py-1 rounded'>
                   {row.original.npi}
                </div>
             ),
@@ -582,8 +580,8 @@ export const tableConfigs = {
       title: "Delete Visit Management",
       subtitle: "Manage deleted visit records and permanent deletion",
       icon: Trash2,
-      gradientColors: "bg-gradient-to-r from-red-600 to-rose-600",
-      backgroundColor: "bg-gradient-to-br from-red-50 via-rose-50 to-pink-100",
+      gradientColors: "bg-primary-gradient",
+      backgroundColor: "",
       searchPlaceholder: "Search deleted visits...",
       emptyMessage: "No deleted visit records found",
       columns: [

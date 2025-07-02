@@ -29,7 +29,7 @@ const ProviderTable = () => {
          header: "Provider Name",
          accessorKey: "name",
          cell: ({ row }) => (
-            <div className='font-semibold text-cyan-700'>
+            <div className='font-semibold text-primary'>
                {row.getValue("name")}
             </div>
          ),
@@ -38,7 +38,7 @@ const ProviderTable = () => {
          header: "Location",
          accessorKey: "location",
          cell: ({ row }) => (
-            <span className='px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800'>
+            <span className='px-2 py-1 rounded-full text-xs font-medium bg-primary-soft text-primary-strong'>
                {row.getValue("location")}
             </span>
          ),
@@ -47,7 +47,7 @@ const ProviderTable = () => {
          header: "City, State",
          accessorKey: "city",
          cell: ({ row }) => (
-            <div className='text-sm text-gray-600'>
+            <div className='text-sm text-muted-foreground'>
                {row.getValue("city")}, {row.original.state}
             </div>
          ),
@@ -56,7 +56,7 @@ const ProviderTable = () => {
          header: "Phone",
          accessorKey: "phone",
          cell: ({ row }) => (
-            <div className='font-medium text-blue-600'>
+            <div className='font-medium text-primary'>
                {row.getValue("phone")}
             </div>
          ),
@@ -65,7 +65,7 @@ const ProviderTable = () => {
          header: "NPI",
          accessorKey: "npi",
          cell: ({ row }) => (
-            <div className='font-mono text-sm text-gray-700'>
+            <div className='font-mono text-sm text-foreground'>
                {row.getValue("npi")}
             </div>
          ),
@@ -74,7 +74,7 @@ const ProviderTable = () => {
          header: "State License",
          accessorKey: "state_lic",
          cell: ({ row }) => (
-            <div className='font-mono text-sm text-gray-700'>
+            <div className='font-mono text-sm text-foreground'>
                {row.getValue("state_lic")}
             </div>
          ),
@@ -156,27 +156,27 @@ const ProviderTable = () => {
    };
 
    return (
-      <div className='min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-cyan-100 p-6'>
+      <div className='min-h-screen bg-background p-6'>
          <div className='container mx-auto max-w-7xl'>
-            <Card className='shadow-2xl border-0 backdrop-blur-sm bg-white/80'>
-               <CardHeader className='bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-t-lg'>
+            <Card className='shadow-2xl border-0 backdrop-blur-sm bg-card/80'>
+               <CardHeader className='bg-primary-gradient text-primary-foreground rounded-t-lg'>
                   <div className='flex items-center justify-between'>
                      <div className='flex items-center gap-3'>
-                        <div className='p-2 bg-white/20 rounded-lg'>
+                        <div className='p-2 bg-primary-foreground/20 rounded-lg'>
                            <FaUserMd className='h-6 w-6' />
                         </div>
                         <div>
                            <CardTitle className='text-2xl font-bold'>
                               Provider Management
                            </CardTitle>
-                           <p className='text-cyan-100 mt-1'>
+                           <p className='text-primary-foreground/80 mt-1'>
                               Manage healthcare providers and their credentials
                            </p>
                         </div>
                      </div>
                      <Modal
                         trigger={
-                           <Button className='bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm'>
+                           <Button className='bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground border-primary-foreground/30 backdrop-blur-sm'>
                               <FaPlus className='mr-2 h-4 w-4' /> Add Provider
                            </Button>
                         }
@@ -193,7 +193,7 @@ const ProviderTable = () => {
                               >
                                  <label
                                     htmlFor={key}
-                                    className='block text-sm font-medium text-cyan-700 mb-2'
+                                    className='block text-sm font-medium text-primary mb-2'
                                  >
                                     {key.replace(/_/g, " ").toUpperCase()}
                                  </label>
@@ -207,14 +207,14 @@ const ProviderTable = () => {
                                     onChange={(e) =>
                                        handleNewProviderChange(e, key)
                                     }
-                                    className='border-cyan-200 focus:border-cyan-500'
+                                    className='border-primary/40 focus:border-primary'
                                  />
                               </div>
                            ))}
                            <div className='col-span-full flex justify-end mt-4'>
                               <Button
                                  onClick={handleAddProvider}
-                                 className='bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700'
+                                 className='bg-primary-gradient'
                               >
                                  Save Provider
                               </Button>
