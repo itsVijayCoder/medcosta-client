@@ -3,30 +3,224 @@ import { supabase, handleSupabaseError } from "../lib/supabaseClient";
 
 export const patientService = {
    /**
-    * Create a new patient
+    * Test user permissions
     */
-   async createPatient(patientData) {
+   async testPermissions() {
       try {
-         // Generate patient number if not provided
-         if (!patientData.patient_number) {
-            const { data: numberData } = await this.generatePatientNumber();
-            patientData.patient_number = numberData;
+         console.log("=== TESTING USER PERMISSIONS ===");
+
+         // Get current session
+         const {
+            data: { session },
+            error: sessionError,
+         } = await supabase.auth.getSession();
+         if (sessionError) {
+            console.error("Session error:", sessionError);
+            return { hasPermission: false, error: sessionError };
          }
 
-         const { data, error } = await supabase
+         if (!session?.user) {
+            console.log("No user session found");
+            return { hasPermission: false, error: "No user session" };
+         }
+
+         console.log(
+            "Current user:",
+            session.user.email,
+            "ID:",
+            session.user.id
+         );
+
+         // Direct profile check (more reliable than SQL function)
+         const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+
+         if (profileError) {
+            console.error("Profile lookup error:", profileError);
+            return { hasPermission: false, error: profileError };
+         }
+
+         console.log("Profile found:", profile);
+         const hasRole =
+            profile &&
+            [
+               "super_admin",
+               "admin",
+               "doctor",
+               "nurse",
+               "receptionist",
+            ].includes(profile.role);
+         console.log("Has healthcare role:", hasRole);
+
+         return {
+            hasPermission: hasRole,
+            profile,
+            error: hasRole ? null : "User does not have required role",
+         };
+      } catch (error) {
+         console.error("Permission test error:", error);
+         return { hasPermission: false, error: handleSupabaseError(error) };
+      }
+   },
+
+   /**
+    * Create a new patient
+    */
+   async createPatient(formData) {
+      try {
+         console.log("=== CREATING PATIENT ===");
+         console.log("Form data:", formData);
+
+         // Test permissions first
+         const permissionResult = await this.testPermissions();
+         console.log("Permission check result:", permissionResult);
+
+         if (!permissionResult.hasPermission) {
+            throw new Error(
+               `Permission denied: ${
+                  permissionResult.error || "User not authorized"
+               }`
+            );
+         }
+
+         // Check current user session
+         const {
+            data: { session },
+         } = await supabase.auth.getSession();
+         console.log("Current session:", session?.user?.email);
+
+         // Check user profile
+         if (session?.user) {
+            const { data: profile } = await supabase
+               .from("profiles")
+               .select("*")
+               .eq("id", session.user.id)
+               .single();
+            console.log("User profile:", profile);
+         }
+
+         // Generate patient number if not provided
+         if (!formData.patient_number) {
+            const { data: numberData } = await this.generatePatientNumber();
+            formData.patient_number = numberData;
+         }
+
+         // Separate patient data from related data
+         const patientData = {
+            patient_number: formData.patient_number,
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            date_of_birth: formData.dob || formData.date_of_birth,
+            ssn: formData.ssn,
+            gender: formData.gender,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state || formData.state_filed,
+            zip: formData.zip || formData.pincode,
+            home_phone: formData.home_phone || formData.phone,
+            mobile_phone: formData.mobile_phone,
+            email: formData.email,
+            emergency_contact_name: formData.emergency_contact_name,
+            emergency_contact_phone: formData.emergency_contact_phone,
+            emergency_contact_relationship:
+               formData.emergency_contact_relationship,
+            case_type: formData.case_type,
+            date_filed: formData.date_filed,
+            state_filed: formData.state_filed,
+            is_active: true,
+            created_at: new Date().toISOString(),
+         };
+
+         // Create the patient record
+         const { data: patient, error: patientError } = await supabase
             .from("patients")
-            .insert([
-               {
-                  ...patientData,
-                  created_at: new Date().toISOString(),
-               },
-            ])
+            .insert([patientData])
             .select()
             .single();
 
-         if (error) throw error;
+         if (patientError) throw patientError;
 
-         return { data, error: null };
+         // Create employer record if employer data exists
+         if (formData.employer_name || formData.adjuster_name) {
+            const employerData = {
+               patient_id: patient.id,
+               employer_name: formData.employer_name,
+               employer_address: formData.employer_address,
+               employer_city: formData.employer_city,
+               employer_state: formData.employer_state,
+               employer_zip: formData.employer_zip,
+               employer_phone: formData.employer_phone,
+               adjuster_name: formData.adjuster_name,
+               adjuster_phone: formData.adjuster_phone,
+               adjuster_email: formData.adjuster_email,
+               claim_number: formData.claim_number || formData.claim,
+               date_of_injury: formData.date_of_injury,
+               is_current: true,
+               created_at: new Date().toISOString(),
+            };
+
+            const { error: employerError } = await supabase
+               .from("patient_employers")
+               .insert([employerData]);
+
+            if (employerError) {
+               console.error("Error creating employer record:", employerError);
+               // Don't fail the whole operation for employer data
+            }
+         }
+
+         // Create insurance record if insurance data exists
+         if (formData.insurance_name || formData.policy_number) {
+            // First, try to find the insurance company by name
+            let insuranceCompanyId = null;
+            if (formData.insurance_name) {
+               const { data: insuranceCompanies } = await supabase
+                  .from("insurance_companies")
+                  .select("id")
+                  .ilike("name", formData.insurance_name)
+                  .limit(1);
+
+               if (insuranceCompanies && insuranceCompanies.length > 0) {
+                  insuranceCompanyId = insuranceCompanies[0].id;
+               }
+            }
+
+            const insuranceData = {
+               patient_id: patient.id,
+               insurance_company_id: insuranceCompanyId,
+               policy_number: formData.policy_number,
+               group_number: formData.group_number,
+               subscriber_name:
+                  formData.subscriber_name ||
+                  `${formData.first_name} ${formData.last_name}`,
+               subscriber_dob: formData.subscriber_dob || formData.dob,
+               relationship: formData.relationship || "Self",
+               effective_date: formData.effective_date,
+               termination_date: formData.termination_date,
+               copay_amount: formData.copay_amount,
+               deductible_amount: formData.deductible_amount,
+               is_primary: true,
+               is_active: true,
+               created_at: new Date().toISOString(),
+            };
+
+            const { error: insuranceError } = await supabase
+               .from("patient_insurance")
+               .insert([insuranceData]);
+
+            if (insuranceError) {
+               console.error(
+                  "Error creating insurance record:",
+                  insuranceError
+               );
+               // Don't fail the whole operation for insurance data
+            }
+         }
+
+         return { data: patient, error: null };
       } catch (error) {
          return { data: null, error: handleSupabaseError(error) };
       }

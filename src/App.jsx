@@ -9,14 +9,43 @@ export const AuthContext = createContext();
 
 function App() {
    const [user, setUser] = useState(null);
+   const [userProfile, setUserProfile] = useState(null);
    const [loading, setLoading] = useState(true);
    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+   // Fetch user profile data
+   const fetchUserProfile = async (userId) => {
+      if (!userId) return;
+
+      try {
+         const { data: profile, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", userId)
+            .single();
+
+         if (error) {
+            console.error("Error fetching user profile:", error);
+            return;
+         }
+
+         setUserProfile(profile);
+         console.log("User profile loaded:", profile);
+      } catch (error) {
+         console.error("Error fetching profile:", error);
+      }
+   };
 
    useEffect(() => {
       // Get initial session
       supabase.auth.getSession().then(({ data: { session } }) => {
          setUser(session?.user ?? null);
          setIsAuthenticated(!!session?.user);
+
+         if (session?.user) {
+            fetchUserProfile(session.user.id);
+         }
+
          setLoading(false);
       });
 
@@ -26,6 +55,13 @@ function App() {
       } = supabase.auth.onAuthStateChange(async (event, session) => {
          setUser(session?.user ?? null);
          setIsAuthenticated(!!session?.user);
+
+         if (session?.user) {
+            fetchUserProfile(session.user.id);
+         } else {
+            setUserProfile(null);
+         }
+
          setLoading(false);
       });
 
@@ -62,6 +98,7 @@ function App() {
       <AuthContext.Provider
          value={{
             user,
+            userProfile,
             isAuthenticated,
             loading,
             login,

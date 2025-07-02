@@ -4,6 +4,7 @@ import { MultiStepForm } from "@/components/ui/multi-step-form";
 import { Button } from "@/components/ui/button";
 import { User, FileText, Shield, Building2 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { patientService } from "@/services/patientService";
 
 // Create a custom lazy loading wrapper for form step components
 const createLazyComponent = (importFn, exportName) => {
@@ -40,23 +41,52 @@ const PatientRegistration = () => {
    const navigate = useNavigate();
    const [enableAnimations, setEnableAnimations] = useState(false);
    const [formData, setFormData] = useState({
+      // Personal Information
       first_name: "",
       last_name: "",
       dob: "",
-      city: "",
       ssn: "",
+      gender: "",
       address: "",
+      city: "",
+      state: "",
+      zip: "",
       home_phone: "",
+      mobile_phone: "",
+      email: "",
+      emergency_contact_name: "",
+      emergency_contact_phone: "",
+      emergency_contact_relationship: "",
+
+      // Case Information
       case_type: "",
       date_filed: "",
       state_filed: "",
+
+      // Insurance Information
       insurance_name: "",
-      claim: "",
       policy_number: "",
+      group_number: "",
+      subscriber_name: "",
+      subscriber_dob: "",
+      relationship: "",
+      effective_date: "",
+      termination_date: "",
+      copay_amount: "",
+      deductible_amount: "",
+
+      // Employer Information
       employer_name: "",
-      employer_city: "",
       employer_address: "",
+      employer_city: "",
+      employer_state: "",
+      employer_zip: "",
+      employer_phone: "",
       adjuster_name: "",
+      adjuster_phone: "",
+      adjuster_email: "",
+      claim_number: "",
+      date_of_injury: "",
    });
 
    const steps = [
@@ -96,33 +126,46 @@ const PatientRegistration = () => {
 
    const handleSubmit = async (finalData) => {
       try {
-         const response = await fetch(
-            "http://localhost/medcosta/index.php/save_patient",
-            {
-               method: "POST",
-               headers: {
-                  "Content-Type": "application/json",
-               },
-               body: JSON.stringify(finalData),
-            }
-         );
+         console.log("Form data being submitted:", finalData);
 
-         const data = await response.json();
-         if (data.success) {
-            alert("Patient registered successfully!");
-            navigate("/dataentry/patient-entry");
-         } else {
-            alert("Failed to register patient.");
+         // Use Supabase service to create patient with all related data
+         const { data, error } = await patientService.createPatient(finalData);
+
+         if (error) {
+            console.error("Patient creation error:", error);
+            alert(`Error: ${error}`);
+            return;
          }
+
+         console.log("Patient created successfully:", data);
+         alert("Patient registered successfully!");
+         navigate("/dataentry/patient-entry");
       } catch (error) {
          console.error("Error submitting form:", error);
          alert("Error occurred during registration.");
       }
    };
+
+   const testPermissions = async () => {
+      try {
+         console.log("=== TESTING PERMISSIONS FROM UI ===");
+         const result = await patientService.testPermissions();
+         console.log("Permission test result:", result);
+         alert(
+            `Permission Test Result: ${
+               result.hasPermission ? "PASS" : "FAIL"
+            }\n\nDetails:\n${JSON.stringify(result, null, 2)}`
+         );
+      } catch (error) {
+         console.error("Permission test error:", error);
+         alert(`Permission Test Error: ${error.message}`);
+      }
+   };
+
    return (
       <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 sm:p-6 relative overflow-hidden'>
          {/* Animation Toggle Button */}
-         <div className='fixed top-20 right-4 z-50'>
+         <div className='fixed top-20 right-4 z-50 space-y-2'>
             <Button
                onClick={() => setEnableAnimations(!enableAnimations)}
                variant={enableAnimations ? "default" : "outline"}
@@ -136,6 +179,14 @@ const PatientRegistration = () => {
                `}
             >
                {enableAnimations ? "🎬 Animations ON" : "🎭 Animations OFF"}
+            </Button>
+
+            <Button
+               onClick={testPermissions}
+               variant='outline'
+               className='block w-full px-4 py-2 text-sm font-semibold rounded-lg shadow-lg bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
+            >
+               🔐 Test Permissions
             </Button>
          </div>
 

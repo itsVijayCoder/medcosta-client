@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
    Bell,
    Search,
@@ -48,24 +48,154 @@ import {
 } from "recharts/lib/index";
 import { StatCard } from "@/components/ui/stat-card";
 import { SurgeryStats } from "@/components/ui/surgery-stats";
+import { dashboardService } from "@/services/dashboardService";
+import { supabase } from "@/lib/supabaseClient";
 import { DoctorsList } from "@/components/ui/doctors-list";
 import { statsData, chartData, patientSampleData, doctors } from "@/data";
 
 const Dashboard = () => {
    const [search, setSearch] = useState("");
    const [selectedTimeRange, setSelectedTimeRange] = useState("12 months");
+   const [dashboardData, setDashboardData] = useState({
+      stats: [],
+      recentAppointments: [],
+      chartData: [],
+      loading: true,
+   });
+
+   // Fetch real-time dashboard data
+   useEffect(() => {
+      const fetchDashboardData = async () => {
+         try {
+            // Get complete dashboard data
+            const [statsResult, appointmentsResult, trendsResult] =
+               await Promise.all([
+                  dashboardService.getDashboardStats(),
+                  dashboardService.getRecentAppointments(5),
+                  dashboardService.getAppointmentTrends(7),
+               ]);
+
+            if (statsResult.error) {
+               console.error("Error fetching stats:", statsResult.error);
+               return;
+            }
+
+            // Format stats for the UI
+            const formattedStats = [
+               {
+                  title: "Today's Appointments",
+                  value: statsResult.data?.todayAppointments || 0,
+                  icon: "Calendar",
+                  trend: "up",
+                  change: "+12%",
+               },
+               {
+                  title: "Total Patients",
+                  value: statsResult.data?.totalPatients || 0,
+                  icon: "Users",
+                  trend: "up",
+                  change: "+5%",
+               },
+               {
+                  title: "Active Providers",
+                  value: statsResult.data?.totalProviders || 0,
+                  icon: "UserPlus",
+                  trend: "up",
+                  change: "+3%",
+               },
+               {
+                  title: "Weekly Completed",
+                  value: statsResult.data?.weeklyCompletedAppointments || 0,
+                  icon: "Activity",
+                  trend: "up",
+                  change: "+18%",
+               },
+            ];
+
+            // Format trends data for charts
+            const chartDataFormatted =
+               trendsResult.data?.map((trend) => ({
+                  name: new Date(trend.date).toLocaleDateString("en-US", {
+                     weekday: "short",
+                  }),
+                  Completed: trend.completed || 0,
+                  Scheduled: trend.scheduled || 0,
+                  New: trend.new_patients || 0,
+               })) || [];
+
+            setDashboardData({
+               stats: formattedStats,
+               recentAppointments: appointmentsResult.data || [],
+               chartData: chartDataFormatted,
+               loading: false,
+            });
+         } catch (error) {
+            console.error("Error:", error);
+            setDashboardData((prev) => ({ ...prev, loading: false }));
+         }
+      };
+
+      fetchDashboardData();
+
+      // Set up real-time subscriptions for live updates
+      const appointmentsSubscription = supabase
+         .channel("dashboard-appointments")
+         .on(
+            "postgres_changes",
+            {
+               event: "*",
+               schema: "public",
+               table: "appointments",
+            },
+            () => {
+               fetchDashboardData(); // Refresh data when appointments change
+            }
+         )
+         .subscribe();
+
+      const patientsSubscription = supabase
+         .channel("dashboard-patients")
+         .on(
+            "postgres_changes",
+            {
+               event: "*",
+               schema: "public",
+               table: "patients",
+            },
+            () => {
+               fetchDashboardData(); // Refresh data when patients change
+            }
+         )
+         .subscribe();
+
+      return () => {
+         appointmentsSubscription.unsubscribe();
+         patientsSubscription.unsubscribe();
+      };
+   }, []);
 
    const filteredDoctors = doctors.filter((doctor) =>
       doctor.name.toLowerCase().includes(search.toLowerCase())
    );
 
-   // Chart data from static data
-   const chartDataFormatted = chartData.months.map((month, index) => ({
-      name: month,
-      Completed: chartData.completedData[index],
-      Active: chartData.activeData[index],
-      New: chartData.newData[index],
-   }));
+   // Use real-time data or fallback to static data
+   const displayStats =
+      dashboardData.stats.length > 0 ? dashboardData.stats : statsData;
+   const displayAppointments =
+      dashboardData.recentAppointments.length > 0
+         ? dashboardData.recentAppointments
+         : patientSampleData;
+
+   // Chart data from real-time data or static data
+   const chartDataFormatted =
+      dashboardData.chartData.length > 0
+         ? dashboardData.chartData
+         : chartData.months.map((month, index) => ({
+              name: month,
+              Completed: chartData.completedData[index],
+              Active: chartData.activeData[index],
+              New: chartData.newData[index],
+           }));
 
    // Enhanced stats with icons mapping
    const iconMap = {
@@ -75,7 +205,7 @@ const Dashboard = () => {
       Activity,
    };
 
-   const enhancedStats = statsData.map((stat) => ({
+   const enhancedStats = displayStats.map((stat) => ({
       ...stat,
       icon: iconMap[stat.icon] || Users,
    }));
@@ -417,57 +547,89 @@ const Dashboard = () => {
                            </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {patientSampleData.map((patient, i) => (
-                              <TableRow
-                                 key={i}
-                                 className='hover:bg-gray-50 transition-colors'
-                              >
-                                 <TableCell className='font-medium text-gray-900'>
-                                    <div className='flex items-center space-x-3'>
-                                       <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
-                                          <span className='text-sm font-medium text-blue-600'>
-                                             {patient.name
-                                                .split(" ")
-                                                .map((n) => n[0])
-                                                .join("")}
-                                          </span>
+                           {displayAppointments.map((appointment, i) => {
+                              // Handle both real appointments and sample data structures
+                              const patientName = appointment.patients
+                                 ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
+                                 : appointment.name;
+                              const providerName =
+                                 appointment.providers?.name ||
+                                 appointment.doctor;
+                              const appointmentDate =
+                                 appointment.appointment_date ||
+                                 appointment.date;
+                              const appointmentStatus = appointment.status;
+
+                              return (
+                                 <TableRow
+                                    key={appointment.id || i}
+                                    className='hover:bg-gray-50 transition-colors'
+                                 >
+                                    <TableCell className='font-medium text-gray-900'>
+                                       <div className='flex items-center space-x-3'>
+                                          <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
+                                             <span className='text-sm font-medium text-blue-600'>
+                                                {patientName
+                                                   .split(" ")
+                                                   .map((n) => n[0])
+                                                   .join("")}
+                                             </span>
+                                          </div>
+                                          <span>{patientName}</span>
                                        </div>
-                                       <span>{patient.name}</span>
-                                    </div>
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    #{patient.serial}
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    {patient.gender}
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    {patient.disease}
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    {patient.doctor}
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    {patient.date}
-                                 </TableCell>
-                                 <TableCell>
-                                    <Badge
-                                       variant={
-                                          patient.status === "Critical"
-                                             ? "destructive"
-                                             : "secondary"
-                                       }
-                                       className={`${
-                                          patient.status === "Critical"
-                                             ? "bg-red-100 text-red-700 hover:bg-red-200"
-                                             : "bg-green-100 text-green-700 hover:bg-green-200"
-                                       }`}
-                                    >
-                                       {patient.status}
-                                    </Badge>
-                                 </TableCell>
-                              </TableRow>
-                           ))}
+                                    </TableCell>
+                                    <TableCell className='text-gray-600'>
+                                       #
+                                       {appointment.appointment_id ||
+                                          appointment.serial}
+                                    </TableCell>
+                                    <TableCell className='text-gray-600'>
+                                       {appointment.appointment_type ||
+                                          appointment.gender ||
+                                          "General"}
+                                    </TableCell>
+                                    <TableCell className='text-gray-600'>
+                                       {appointment.chief_complaint ||
+                                          appointment.disease ||
+                                          "N/A"}
+                                    </TableCell>
+                                    <TableCell className='text-gray-600'>
+                                       {providerName}
+                                    </TableCell>
+                                    <TableCell className='text-gray-600'>
+                                       {new Date(
+                                          appointmentDate
+                                       ).toLocaleDateString()}
+                                    </TableCell>
+                                    <TableCell>
+                                       <Badge
+                                          variant={
+                                             appointmentStatus ===
+                                                "Cancelled" ||
+                                             appointmentStatus === "Critical"
+                                                ? "destructive"
+                                                : appointmentStatus ===
+                                                  "Completed"
+                                                ? "default"
+                                                : "secondary"
+                                          }
+                                          className={`${
+                                             appointmentStatus ===
+                                                "Cancelled" ||
+                                             appointmentStatus === "Critical"
+                                                ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                                : appointmentStatus ===
+                                                  "Completed"
+                                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                          }`}
+                                       >
+                                          {appointmentStatus}
+                                       </Badge>
+                                    </TableCell>
+                                 </TableRow>
+                              );
+                           })}
                         </TableBody>
                      </Table>
                   </div>
