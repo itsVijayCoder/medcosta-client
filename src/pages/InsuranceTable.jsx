@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import GenericTable from "@/components/ui/generic-table";
 import { tableConfigs } from "@/data/tableConfigs";
-import { insuranceData } from "@/data";
 import { masterDataService } from "@/services/masterDataService";
 import { supabase } from "@/lib/supabaseClient";
 
 const InsuranceTable = () => {
-   const [data, setData] = useState(insuranceData);
+   const [data, setData] = useState([]);
    const [loading, setLoading] = useState(true);
    const config = tableConfigs.insurance;
 
@@ -21,6 +20,7 @@ const InsuranceTable = () => {
                setLoading(false);
                return;
             }
+            console.log("Insurance companies from API:", insuranceCompanies);
             setData(insuranceCompanies || []);
          } catch (error) {
             console.error("Error:", error);
@@ -93,9 +93,16 @@ const InsuranceTable = () => {
       }
 
       try {
-         const { error } = await masterDataService.deleteInsuranceCompany(id);
+         // If id is an object, extract the actual id value
+         const actualId = typeof id === "object" && id !== null ? id.id : id;
+         console.log("Deleting insurance company with ID:", actualId);
+
+         const { error } = await masterDataService.deleteInsuranceCompany(
+            actualId
+         );
          if (error) {
-            alert(`Error: ${error}`);
+            console.error("Error from deleteInsuranceCompany:", error);
+            alert(`Error: ${error.message || JSON.stringify(error)}`);
             return;
          }
          // Data will be updated automatically via real-time subscription
@@ -106,13 +113,28 @@ const InsuranceTable = () => {
       }
    };
 
-   // Enhanced config with real-time operations
+   // Enhanced config with real-time operations using Supabase
    const enhancedConfig = {
       ...config,
-      onAdd: handleAdd,
-      onEdit: handleEdit,
       onDelete: handleDelete,
       loading,
+      dataSource: "insurance_companies", // Connect to Supabase insurance_companies table
+      refreshData: () => {
+         setLoading(true);
+         masterDataService
+            .getInsuranceCompanies()
+            .then(({ data: insuranceCompanies }) => {
+               console.log(
+                  "Refreshed insurance companies:",
+                  insuranceCompanies
+               );
+               setData(insuranceCompanies || []);
+            })
+            .catch((error) =>
+               console.error("Error refreshing insurance companies:", error)
+            )
+            .finally(() => setLoading(false));
+      },
    };
 
    return <GenericTable {...enhancedConfig} data={data} />;

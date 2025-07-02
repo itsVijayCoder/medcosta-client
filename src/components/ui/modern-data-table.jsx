@@ -60,7 +60,16 @@ export function ModernDataTable({
 
    // Filter data based on search term
    useEffect(() => {
+      console.log("ModernDataTable - data prop received:", data);
+      console.log("ModernDataTable - data type:", typeof data);
+      console.log("ModernDataTable - is array:", Array.isArray(data));
+      console.log(
+         "ModernDataTable - data length:",
+         Array.isArray(data) ? data.length : "N/A"
+      );
+
       if (!searchTerm || !Array.isArray(data)) {
+         console.log("ModernDataTable - setting filteredData to:", data || []);
          setFilteredData(data || []);
          return;
       }
@@ -75,6 +84,7 @@ export function ModernDataTable({
                   .includes(searchTerm.toLowerCase())
          )
       );
+      console.log("ModernDataTable - setting filtered data to:", filtered);
       setFilteredData(filtered);
    }, [data, searchTerm, columns]);
 
@@ -229,6 +239,11 @@ export function ModernDataTable({
             {filteredData.length === 0 ? (
                <div className='text-center py-12 text-muted-foreground'>
                   <p className='text-lg'>{emptyMessage}</p>
+                  <p className='text-sm text-gray-500'>
+                     {`Debug - Data: ${typeof filteredData}, Is Array: ${Array.isArray(
+                        filteredData
+                     )}, Length: ${filteredData.length}`}
+                  </p>
                </div>
             ) : (
                <div className='rounded-md border overflow-hidden'>

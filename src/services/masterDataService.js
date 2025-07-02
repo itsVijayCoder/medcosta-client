@@ -37,16 +37,32 @@ export const masterDataService = {
     */
    async createLocation(locationData) {
       try {
+         console.log("Creating location with data:", locationData);
+
+         // Make sure location_name is provided
+         if (!locationData.location_name) {
+            console.error("Location name is required");
+            return { data: null, error: "Location name is required" };
+         }
+
+         // Ensure is_active is set to true for new records
+         const dataToInsert = { ...locationData, is_active: true };
+
          const { data, error } = await supabase
             .from("locations")
-            .insert([locationData])
-            .select()
-            .single();
+            .insert([dataToInsert])
+            .select();
 
-         if (error) throw error;
+         console.log("Create location result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error creating location:", error);
+            throw error;
+         }
+
+         return { data: data[0], error: null };
       } catch (error) {
+         console.error("Exception in createLocation:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -56,17 +72,29 @@ export const masterDataService = {
     */
    async updateLocation(id, updates) {
       try {
+         console.log("Updating location with ID:", id, "Updates:", updates);
+
+         if (!id) {
+            console.error("Invalid ID provided for location update");
+            return { data: null, error: "Invalid ID provided" };
+         }
+
          const { data, error } = await supabase
             .from("locations")
             .update(updates)
             .eq("id", id)
-            .select()
-            .single();
+            .select();
 
-         if (error) throw error;
+         console.log("Update location result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error updating location:", error);
+            throw error;
+         }
+
+         return { data: data && data.length > 0 ? data[0] : null, error: null };
       } catch (error) {
+         console.error("Exception in updateLocation:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -76,17 +104,23 @@ export const masterDataService = {
     */
    async deleteLocation(id) {
       try {
+         console.log("deleteLocation called with ID:", id);
+
+         // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("locations")
             .update({ is_active: false })
-            .eq("id", id)
-            .select()
-            .single();
+            .eq("id", id);
 
-         if (error) throw error;
+         if (error) {
+            console.error("Error in deleteLocation:", error);
+            throw error;
+         }
 
-         return { data, error: null };
+         // Success response
+         return { data: true, error: null };
       } catch (error) {
+         console.error("Error in deleteLocation:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -126,16 +160,32 @@ export const masterDataService = {
     */
    async createInsuranceCompany(insuranceData) {
       try {
+         console.log("Creating insurance company with data:", insuranceData);
+
+         // Make sure name is provided
+         if (!insuranceData.name) {
+            console.error("Insurance company name is required");
+            return { data: null, error: "Insurance company name is required" };
+         }
+
+         // Ensure is_active is set to true for new records
+         const dataToInsert = { ...insuranceData, is_active: true };
+
          const { data, error } = await supabase
             .from("insurance_companies")
-            .insert([insuranceData])
-            .select()
-            .single();
+            .insert([dataToInsert])
+            .select();
 
-         if (error) throw error;
+         console.log("Create insurance company result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error creating insurance company:", error);
+            throw error;
+         }
+
+         return { data: data[0], error: null };
       } catch (error) {
+         console.error("Exception in createInsuranceCompany:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -145,17 +195,34 @@ export const masterDataService = {
     */
    async updateInsuranceCompany(id, updates) {
       try {
+         console.log(
+            "Updating insurance company with ID:",
+            id,
+            "Updates:",
+            updates
+         );
+
+         if (!id) {
+            console.error("Invalid ID provided for insurance company update");
+            return { data: null, error: "Invalid ID provided" };
+         }
+
          const { data, error } = await supabase
             .from("insurance_companies")
             .update(updates)
             .eq("id", id)
-            .select()
-            .single();
+            .select();
 
-         if (error) throw error;
+         console.log("Update insurance company result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error updating insurance company:", error);
+            throw error;
+         }
+
+         return { data: data && data.length > 0 ? data[0] : null, error: null };
       } catch (error) {
+         console.error("Exception in updateInsuranceCompany:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -165,17 +232,23 @@ export const masterDataService = {
     */
    async deleteInsuranceCompany(id) {
       try {
+         console.log("deleteInsuranceCompany called with ID:", id);
+
+         // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("insurance_companies")
             .update({ is_active: false })
-            .eq("id", id)
-            .select()
-            .single();
+            .eq("id", id);
 
-         if (error) throw error;
+         if (error) {
+            console.error("Error in deleteInsuranceCompany:", error);
+            throw error;
+         }
 
-         return { data, error: null };
+         // Success response
+         return { data: true, error: null };
       } catch (error) {
+         console.error("Error in deleteInsuranceCompany:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -229,24 +302,37 @@ export const masterDataService = {
     */
    async createProvider(providerData) {
       try {
+         console.log("Creating provider with data:", providerData);
+
+         // Make sure name is provided
+         if (!providerData.name) {
+            console.error("Provider name is required");
+            return { data: null, error: "Provider name is required" };
+         }
+
+         // Ensure is_active is set to true for new records
+         const dataToInsert = { ...providerData, is_active: true };
+
          const { data, error } = await supabase
             .from("providers")
-            .insert([providerData])
-            .select(
-               `
-          *,
-          locations (
-            id,
-            location_name
-          )
-        `
-            )
-            .single();
+            .insert([dataToInsert]).select(`
+               *,
+               locations (
+                 id,
+                 location_name
+               )
+             `);
 
-         if (error) throw error;
+         console.log("Create provider result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error creating provider:", error);
+            throw error;
+         }
+
+         return { data: data[0], error: null };
       } catch (error) {
+         console.error("Exception in createProvider:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -256,25 +342,34 @@ export const masterDataService = {
     */
    async updateProvider(id, updates) {
       try {
+         console.log("Updating provider with ID:", id, "Updates:", updates);
+
+         if (!id) {
+            console.error("Invalid ID provided for provider update");
+            return { data: null, error: "Invalid ID provided" };
+         }
+
          const { data, error } = await supabase
             .from("providers")
             .update(updates)
-            .eq("id", id)
-            .select(
-               `
-          *,
-          locations (
-            id,
-            location_name
-          )
-        `
-            )
-            .single();
+            .eq("id", id).select(`
+               *,
+               locations (
+                 id,
+                 location_name
+               )
+             `);
 
-         if (error) throw error;
+         console.log("Update provider result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error updating provider:", error);
+            throw error;
+         }
+
+         return { data: data && data.length > 0 ? data[0] : null, error: null };
       } catch (error) {
+         console.error("Exception in updateProvider:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -284,17 +379,23 @@ export const masterDataService = {
     */
    async deleteProvider(id) {
       try {
+         console.log("deleteProvider called with ID:", id);
+
+         // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("providers")
             .update({ is_active: false })
-            .eq("id", id)
-            .select()
-            .single();
+            .eq("id", id);
 
-         if (error) throw error;
+         if (error) {
+            console.error("Error in deleteProvider:", error);
+            throw error;
+         }
 
-         return { data, error: null };
+         // Success response
+         return { data: true, error: null };
       } catch (error) {
+         console.error("Error in deleteProvider:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -340,16 +441,37 @@ export const masterDataService = {
     */
    async createDiagnosisCode(diagnosisData) {
       try {
+         console.log("Creating diagnosis code with data:", diagnosisData);
+
+         // Make sure diagnosis_code is provided
+         if (!diagnosisData.diagnosis_code) {
+            console.error("Diagnosis code is required");
+            return { data: null, error: "Diagnosis code is required" };
+         }
+
+         // Ensure is_active is set to true for new records
+         const dataToInsert = { ...diagnosisData, is_active: true };
+
+         // Handle booleans properly
+         if (dataToInsert.is_preferred !== undefined) {
+            dataToInsert.is_preferred = Boolean(dataToInsert.is_preferred);
+         }
+
          const { data, error } = await supabase
             .from("diagnosis_codes")
-            .insert([diagnosisData])
-            .select()
-            .single();
+            .insert([dataToInsert])
+            .select();
 
-         if (error) throw error;
+         console.log("Create diagnosis code result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error creating diagnosis code:", error);
+            throw error;
+         }
+
+         return { data: data[0], error: null };
       } catch (error) {
+         console.error("Exception in createDiagnosisCode:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -359,17 +481,39 @@ export const masterDataService = {
     */
    async updateDiagnosisCode(id, updates) {
       try {
+         console.log(
+            "Updating diagnosis code with ID:",
+            id,
+            "Updates:",
+            updates
+         );
+
+         if (!id) {
+            console.error("Invalid ID provided for diagnosis code update");
+            return { data: null, error: "Invalid ID provided" };
+         }
+
+         // Handle booleans properly
+         if (updates.is_preferred !== undefined) {
+            updates.is_preferred = Boolean(updates.is_preferred);
+         }
+
          const { data, error } = await supabase
             .from("diagnosis_codes")
             .update(updates)
             .eq("id", id)
-            .select()
-            .single();
+            .select();
 
-         if (error) throw error;
+         console.log("Update diagnosis code result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error updating diagnosis code:", error);
+            throw error;
+         }
+
+         return { data: data && data.length > 0 ? data[0] : null, error: null };
       } catch (error) {
+         console.error("Exception in updateDiagnosisCode:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -379,17 +523,23 @@ export const masterDataService = {
     */
    async deleteDiagnosisCode(id) {
       try {
+         console.log("deleteDiagnosisCode called with ID:", id);
+
+         // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("diagnosis_codes")
             .update({ is_active: false })
-            .eq("id", id)
-            .select()
-            .single();
+            .eq("id", id);
 
-         if (error) throw error;
+         if (error) {
+            console.error("Error in deleteDiagnosisCode:", error);
+            throw error;
+         }
 
-         return { data, error: null };
+         // Success response
+         return { data: true, error: null };
       } catch (error) {
+         console.error("Error in deleteDiagnosisCode:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -447,24 +597,42 @@ export const masterDataService = {
     */
    async createProcedure(procedureData) {
       try {
+         console.log("Creating procedure with data:", procedureData);
+
+         // Make sure procedure_code is provided
+         if (!procedureData.procedure_code) {
+            console.error("Procedure code is required");
+            return { data: null, error: "Procedure code is required" };
+         }
+
+         // Ensure is_active is set to true for new records
+         const dataToInsert = { ...procedureData, is_active: true };
+
+         // Handle booleans properly
+         if (dataToInsert.is_preferred !== undefined) {
+            dataToInsert.is_preferred = Boolean(dataToInsert.is_preferred);
+         }
+
          const { data, error } = await supabase
             .from("procedures")
-            .insert([procedureData])
-            .select(
-               `
-          *,
-          locations (
-            id,
-            location_name
-          )
-        `
-            )
-            .single();
+            .insert([dataToInsert]).select(`
+               *,
+               locations (
+                 id,
+                 location_name
+               )
+             `);
 
-         if (error) throw error;
+         console.log("Create procedure result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error creating procedure:", error);
+            throw error;
+         }
+
+         return { data: data[0], error: null };
       } catch (error) {
+         console.error("Exception in createProcedure:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -474,25 +642,39 @@ export const masterDataService = {
     */
    async updateProcedure(id, updates) {
       try {
+         console.log("Updating procedure with ID:", id, "Updates:", updates);
+
+         if (!id) {
+            console.error("Invalid ID provided for procedure update");
+            return { data: null, error: "Invalid ID provided" };
+         }
+
+         // Handle booleans properly
+         if (updates.is_preferred !== undefined) {
+            updates.is_preferred = Boolean(updates.is_preferred);
+         }
+
          const { data, error } = await supabase
             .from("procedures")
             .update(updates)
-            .eq("id", id)
-            .select(
-               `
-          *,
-          locations (
-            id,
-            location_name
-          )
-        `
-            )
-            .single();
+            .eq("id", id).select(`
+               *,
+               locations (
+                 id,
+                 location_name
+               )
+             `);
 
-         if (error) throw error;
+         console.log("Update procedure result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error updating procedure:", error);
+            throw error;
+         }
+
+         return { data: data && data.length > 0 ? data[0] : null, error: null };
       } catch (error) {
+         console.error("Exception in updateProcedure:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -502,17 +684,23 @@ export const masterDataService = {
     */
    async deleteProcedure(id) {
       try {
+         console.log("deleteProcedure called with ID:", id);
+
+         // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("procedures")
             .update({ is_active: false })
-            .eq("id", id)
-            .select()
-            .single();
+            .eq("id", id);
 
-         if (error) throw error;
+         if (error) {
+            console.error("Error in deleteProcedure:", error);
+            throw error;
+         }
 
-         return { data, error: null };
+         // Success response
+         return { data: true, error: null };
       } catch (error) {
+         console.error("Error in deleteProcedure:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -524,6 +712,10 @@ export const masterDataService = {
     */
    async getModifiers(filters = {}) {
       try {
+         console.log(
+            "masterDataService.getModifiers called with filters:",
+            filters
+         );
          let query = supabase
             .from("modifiers")
             .select("*")
@@ -543,12 +735,15 @@ export const masterDataService = {
             query = query.eq("is_default", true);
          }
 
+         console.log("About to execute Supabase query for modifiers");
          const { data, error } = await query.order("modifier_name");
+         console.log("Supabase modifier query results:", { data, error });
 
          if (error) throw error;
 
          return { data: data || [], error: null };
       } catch (error) {
+         console.error("Error in masterDataService.getModifiers:", error);
          return { data: [], error: handleSupabaseError(error) };
       }
    },
@@ -558,16 +753,37 @@ export const masterDataService = {
     */
    async createModifier(modifierData) {
       try {
+         console.log("Creating modifier with data:", modifierData);
+
+         // Make sure modifier_code is provided
+         if (!modifierData.modifier_code) {
+            console.error("Modifier code is required");
+            return { data: null, error: "Modifier code is required" };
+         }
+
+         // Ensure is_active is set to true for new records
+         const dataToInsert = { ...modifierData, is_active: true };
+
+         // Handle booleans properly
+         if (dataToInsert.is_default !== undefined) {
+            dataToInsert.is_default = Boolean(dataToInsert.is_default);
+         }
+
          const { data, error } = await supabase
             .from("modifiers")
-            .insert([modifierData])
-            .select()
-            .single();
+            .insert([dataToInsert])
+            .select();
 
-         if (error) throw error;
+         console.log("Create modifier result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error creating modifier:", error);
+            throw error;
+         }
+
+         return { data: data[0], error: null };
       } catch (error) {
+         console.error("Exception in createModifier:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -577,17 +793,34 @@ export const masterDataService = {
     */
    async updateModifier(id, updates) {
       try {
+         console.log("Updating modifier with ID:", id, "Updates:", updates);
+
+         if (!id) {
+            console.error("Invalid ID provided for modifier update");
+            return { data: null, error: "Invalid ID provided" };
+         }
+
+         // Handle booleans properly
+         if (updates.is_default !== undefined) {
+            updates.is_default = Boolean(updates.is_default);
+         }
+
          const { data, error } = await supabase
             .from("modifiers")
             .update(updates)
             .eq("id", id)
-            .select()
-            .single();
+            .select();
 
-         if (error) throw error;
+         console.log("Update modifier result:", { data, error });
 
-         return { data, error: null };
+         if (error) {
+            console.error("Error updating modifier:", error);
+            throw error;
+         }
+
+         return { data: data && data.length > 0 ? data[0] : null, error: null };
       } catch (error) {
+         console.error("Exception in updateModifier:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },
@@ -597,17 +830,106 @@ export const masterDataService = {
     */
    async deleteModifier(id) {
       try {
+         console.log("deleteModifier called with ID:", id);
+
+         // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("modifiers")
             .update({ is_active: false })
-            .eq("id", id)
-            .select()
-            .single();
+            .eq("id", id);
+
+         if (error) {
+            console.error("Error in deleteModifier:", error);
+            throw error;
+         }
+
+         // Success response
+         return { data: true, error: null };
+      } catch (error) {
+         console.error("Error in deleteModifier:", error);
+         return { data: null, error: handleSupabaseError(error) };
+      }
+   },
+
+   // ==================== DELETED VISITS ====================
+
+   /**
+    * Get all deleted visits
+    */
+   async getDeletedVisits(filters = {}) {
+      try {
+         console.log("getDeletedVisits called with filters:", filters);
+
+         let query = supabase.from("deleted_visits").select("*");
+
+         if (filters.search) {
+            query = query.or(
+               `CaseNumber.ilike.%${filters.search}%,DoctorName.ilike.%${filters.search}%`
+            );
+         }
+
+         if (filters.speciality) {
+            query = query.eq("speciality", filters.speciality);
+         }
+
+         console.log("Executing query on deleted_visits table");
+         const { data, error } = await query.order("EventDate", {
+            ascending: false,
+         });
+
+         console.log("getDeletedVisits result:", {
+            recordCount: data ? data.length : 0,
+            hasError: !!error,
+            error,
+         });
 
          if (error) throw error;
 
-         return { data, error: null };
+         return { data: data || [], error: null };
       } catch (error) {
+         console.error("Error in getDeletedVisits:", error);
+         return { data: [], error: handleSupabaseError(error) };
+      }
+   },
+
+   /**
+    * Delete visit permanently
+    */
+   async deleteVisitPermanently(id) {
+      try {
+         console.log(
+            "deleteVisitPermanently called with ID:",
+            id,
+            "Type:",
+            typeof id
+         );
+
+         // Ensure ID is in the correct format (UUID string)
+         if (!id) {
+            console.error("Invalid ID provided:", id);
+            throw new Error("Invalid ID provided for deletion");
+         }
+
+         // Log the exact query we're about to run for debugging
+         console.log(`Running: DELETE FROM deleted_visits WHERE id = '${id}'`);
+
+         // According to Supabase docs, delete directly
+         const { data, error } = await supabase
+            .from("deleted_visits")
+            .delete()
+            .eq("id", id);
+
+         console.log("Delete result:", { data, error });
+
+         if (error) {
+            console.error("Error in deleteVisitPermanently:", error);
+            throw error;
+         }
+
+         // Success response
+         return { data: true, error: null };
+      } catch (error) {
+         console.error("Error in deleteVisitPermanently:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },

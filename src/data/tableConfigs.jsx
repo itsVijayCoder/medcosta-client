@@ -10,8 +10,8 @@ import { Trash2 } from "lucide-react";
 
 // Common form field options
 export const yesNoOptions = [
-   { value: "Yes", label: "Yes" },
-   { value: "No", label: "No" },
+   { value: true, label: "Yes" },
+   { value: false, label: "No" },
 ];
 
 export const stateOptions = [
@@ -67,19 +67,22 @@ export const tableConfigs = {
          },
          {
             header: "Location",
-            accessorKey: "location",
-            cell: ({ row }) => (
-               <span className='px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800'>
-                  {row.getValue("location")}
-               </span>
-            ),
+            accessorKey: "locations.location_name",
+            cell: ({ row }) => {
+               const locations = row.original.locations;
+               return (
+                  <span className='px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800'>
+                     {locations ? locations.location_name : "N/A"}
+                  </span>
+               );
+            },
          },
          {
             header: "City, State",
             accessorKey: "city",
             cell: ({ row }) => (
                <div className='text-sm text-gray-600'>
-                  {row.getValue("city")}, {row.original.state}
+                  {row.getValue("city") || "N/A"}, {row.original.state || "N/A"}
                </div>
             ),
          },
@@ -88,7 +91,7 @@ export const tableConfigs = {
             accessorKey: "phone",
             cell: ({ row }) => (
                <div className='font-medium text-blue-600'>
-                  {row.getValue("phone")}
+                  {row.getValue("phone") || "N/A"}
                </div>
             ),
          },
@@ -97,23 +100,32 @@ export const tableConfigs = {
             accessorKey: "npi",
             cell: ({ row }) => (
                <div className='font-mono text-sm text-gray-700'>
-                  {row.getValue("npi")}
+                  {row.getValue("npi") || "N/A"}
                </div>
             ),
          },
          {
             header: "State License",
-            accessorKey: "state_lic",
+            accessorKey: "state_license",
             cell: ({ row }) => (
                <div className='font-mono text-sm text-gray-700'>
-                  {row.getValue("state_lic")}
+                  {row.getValue("state_license") || "N/A"}
+               </div>
+            ),
+         },
+         {
+            header: "Specialty",
+            accessorKey: "specialty",
+            cell: ({ row }) => (
+               <div className='font-medium text-primary-600'>
+                  {row.getValue("specialty") || "N/A"}
                </div>
             ),
          },
       ],
       formFields: [
          { key: "name", label: "Provider Name", type: "text" },
-         { key: "location", label: "Location", type: "text" },
+         { key: "location_id", label: "Location ID", type: "text" },
          { key: "address", label: "Address", type: "text", fullWidth: true },
          { key: "city", label: "City", type: "text" },
          {
@@ -124,13 +136,20 @@ export const tableConfigs = {
          },
          { key: "zip", label: "ZIP Code", type: "text" },
          { key: "phone", label: "Phone", type: "text" },
+         { key: "email", label: "Email", type: "text" },
          { key: "npi", label: "NPI", type: "text", className: "font-mono" },
          { key: "taxonomy_code", label: "Taxonomy Code", type: "text" },
          {
-            key: "state_lic",
+            key: "state_license",
             label: "State License",
             type: "text",
             className: "font-mono",
+         },
+         {
+            key: "specialty",
+            label: "Specialty",
+            type: "select",
+            options: specialtyOptions,
          },
       ],
    },
@@ -186,32 +205,40 @@ export const tableConfigs = {
          {
             header: "Default",
             accessorKey: "is_default",
-            cell: ({ row }) => (
-               <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                     row.getValue("is_default") === "Yes"
-                        ? "bg-warning-100 text-warning-800"
-                        : "bg-gray-100 text-gray-600"
-                  }`}
-               >
-                  {row.getValue("is_default")}
-               </span>
-            ),
+            cell: ({ row }) => {
+               const isDefault = row.getValue("is_default");
+               const displayValue = isDefault === true ? "Yes" : "No";
+               return (
+                  <span
+                     className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isDefault
+                           ? "bg-warning-100 text-warning-800"
+                           : "bg-gray-100 text-gray-600"
+                     }`}
+                  >
+                     {displayValue}
+                  </span>
+               );
+            },
          },
          {
             header: "Active",
             accessorKey: "is_active",
-            cell: ({ row }) => (
-               <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                     row.getValue("is_active") === "Yes"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                  }`}
-               >
-                  {row.getValue("is_active")}
-               </span>
-            ),
+            cell: ({ row }) => {
+               const isActive = row.getValue("is_active");
+               const displayValue = isActive === true ? "Yes" : "No";
+               return (
+                  <span
+                     className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isActive
+                           ? "bg-green-100 text-green-800"
+                           : "bg-red-100 text-red-800"
+                     }`}
+                  >
+                     {displayValue}
+                  </span>
+               );
+            },
          },
       ],
       formFields: [
@@ -264,10 +291,10 @@ export const tableConfigs = {
       columns: [
          {
             header: "CPT Code",
-            accessorKey: "cpt_code",
+            accessorKey: "procedure_code",
             cell: ({ row }) => (
                <div className='font-mono font-semibold text-accent-700 bg-accent-50 px-2 py-1 rounded'>
-                  {row.getValue("cpt_code")}
+                  {row.getValue("procedure_code")}
                </div>
             ),
          },
@@ -282,10 +309,10 @@ export const tableConfigs = {
          },
          {
             header: "Fee",
-            accessorKey: "fee",
+            accessorKey: "amount",
             cell: ({ row }) => (
                <div className='font-semibold text-green-600'>
-                  ${parseFloat(row.getValue("fee") || 0).toFixed(2)}
+                  ${parseFloat(row.getValue("amount") || 0).toFixed(2)}
                </div>
             ),
          },
@@ -301,7 +328,7 @@ export const tableConfigs = {
       ],
       formFields: [
          {
-            key: "cpt_code",
+            key: "procedure_code",
             label: "CPT Code",
             type: "text",
             className: "font-mono",
@@ -313,8 +340,8 @@ export const tableConfigs = {
             fullWidth: true,
          },
          {
-            key: "fee",
-            label: "Fee",
+            key: "amount",
+            label: "Fee Amount",
             type: "text",
             placeholder: "Enter fee amount",
          },
@@ -323,6 +350,18 @@ export const tableConfigs = {
             label: "Specialty",
             type: "select",
             options: specialtyOptions,
+         },
+         {
+            key: "category",
+            label: "Category",
+            type: "text",
+         },
+         {
+            key: "is_preferred",
+            label: "Is Preferred",
+            type: "select",
+            options: yesNoOptions,
+            defaultValue: "Yes",
          },
       ],
    },
@@ -339,10 +378,10 @@ export const tableConfigs = {
       columns: [
          {
             header: "ICD Code",
-            accessorKey: "icd_code",
+            accessorKey: "diagnosis_code",
             cell: ({ row }) => (
                <div className='font-mono font-semibold text-primary-700 bg-primary-50 px-2 py-1 rounded'>
-                  {row.getValue("icd_code")}
+                  {row.getValue("diagnosis_code")}
                </div>
             ),
          },
@@ -373,26 +412,56 @@ export const tableConfigs = {
             ),
          },
          {
-            header: "Status",
-            accessorKey: "status",
+            header: "Category",
+            accessorKey: "category",
             cell: ({ row }) => (
-               <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                     row.getValue("status") === "Active"
-                        ? "bg-green-100 text-green-800"
-                        : row.getValue("status") === "Inactive"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-warning-100 text-warning-800"
-                  }`}
-               >
-                  {row.getValue("status")}
+               <span className='px-2 py-1 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800'>
+                  {row.getValue("category")}
                </span>
             ),
+         },
+         {
+            header: "Status",
+            accessorKey: "is_active",
+            cell: ({ row }) => {
+               const isActive = row.getValue("is_active");
+               const displayValue = isActive === true ? "Active" : "Inactive";
+               return (
+                  <span
+                     className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isActive
+                           ? "bg-green-100 text-green-800"
+                           : "bg-red-100 text-red-800"
+                     }`}
+                  >
+                     {displayValue}
+                  </span>
+               );
+            },
+         },
+         {
+            header: "Preferred",
+            accessorKey: "is_preferred",
+            cell: ({ row }) => {
+               const isPreferred = row.getValue("is_preferred");
+               const displayValue = isPreferred === true ? "Yes" : "No";
+               return (
+                  <span
+                     className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isPreferred
+                           ? "bg-warning-100 text-warning-800"
+                           : "bg-gray-100 text-gray-600"
+                     }`}
+                  >
+                     {displayValue}
+                  </span>
+               );
+            },
          },
       ],
       formFields: [
          {
-            key: "icd_code",
+            key: "diagnosis_code",
             label: "ICD Code",
             type: "text",
             className: "font-mono",
@@ -411,11 +480,29 @@ export const tableConfigs = {
             defaultValue: "Primary",
          },
          {
-            key: "status",
-            label: "Status",
+            key: "category",
+            label: "Category",
+            type: "text",
+         },
+         {
+            key: "is_preferred",
+            label: "Is Preferred",
             type: "select",
-            options: statusOptions,
-            defaultValue: "Active",
+            options: yesNoOptions,
+            defaultValue: "Yes",
+         },
+         {
+            key: "icd_version",
+            label: "ICD Version",
+            type: "text",
+            defaultValue: "ICD-10",
+         },
+         {
+            key: "is_active",
+            label: "Is Active",
+            type: "select",
+            options: yesNoOptions,
+            defaultValue: "Yes",
          },
       ],
    },
