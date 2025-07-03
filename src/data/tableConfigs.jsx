@@ -7,11 +7,12 @@ import {
    FaClipboardList,
 } from "react-icons/fa";
 import { Trash2 } from "lucide-react";
+import { masterDataService } from "@/services/masterDataService";
 
 // Common form field options
 export const yesNoOptions = [
-   { value: "Yes", label: "Yes" },
-   { value: "No", label: "No" },
+   { value: true, label: "Yes" },
+   { value: false, label: "No" },
 ];
 
 export const stateOptions = [
@@ -45,14 +46,32 @@ export const statusOptions = [
    { value: "Pending", label: "Pending" },
 ];
 
+// Dynamic options loaders
+export const getLocationOptions = async () => {
+   try {
+      const { data: locations, error } = await masterDataService.getLocations();
+      if (error) {
+         console.error("Error fetching locations:", error);
+         return [];
+      }
+      return locations.map((location) => ({
+         value: location.id,
+         label: location.location_name,
+      }));
+   } catch (error) {
+      console.error("Error loading location options:", error);
+      return [];
+   }
+};
+
 // Table configurations
 export const tableConfigs = {
    provider: {
       title: "Provider Management",
       subtitle: "Manage healthcare providers and their credentials",
       icon: FaUserMd,
-      gradientColors: "bg-gradient-to-r from-cyan-600 to-blue-600",
-      backgroundColor: "bg-gradient-to-br from-cyan-50 via-blue-50 to-cyan-100",
+      gradientColors: "bg-primary-gradient",
+      backgroundColor: "",
       searchPlaceholder: "Search providers...",
       emptyMessage: "No provider records found",
       columns: [
@@ -60,26 +79,29 @@ export const tableConfigs = {
             header: "Provider Name",
             accessorKey: "name",
             cell: ({ row }) => (
-               <div className='font-semibold text-cyan-700'>
+               <div className='font-semibold text-primary-700'>
                   {row.getValue("name")}
                </div>
             ),
          },
          {
             header: "Location",
-            accessorKey: "location",
-            cell: ({ row }) => (
-               <span className='px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800'>
-                  {row.getValue("location")}
-               </span>
-            ),
+            accessorKey: "locations.location_name",
+            cell: ({ row }) => {
+               const locations = row.original.locations;
+               return (
+                  <span className='px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800'>
+                     {locations ? locations.location_name : "N/A"}
+                  </span>
+               );
+            },
          },
          {
             header: "City, State",
             accessorKey: "city",
             cell: ({ row }) => (
                <div className='text-sm text-gray-600'>
-                  {row.getValue("city")}, {row.original.state}
+                  {row.getValue("city") || "N/A"}, {row.original.state || "N/A"}
                </div>
             ),
          },
@@ -88,7 +110,7 @@ export const tableConfigs = {
             accessorKey: "phone",
             cell: ({ row }) => (
                <div className='font-medium text-blue-600'>
-                  {row.getValue("phone")}
+                  {row.getValue("phone") || "N/A"}
                </div>
             ),
          },
@@ -97,23 +119,38 @@ export const tableConfigs = {
             accessorKey: "npi",
             cell: ({ row }) => (
                <div className='font-mono text-sm text-gray-700'>
-                  {row.getValue("npi")}
+                  {row.getValue("npi") || "N/A"}
                </div>
             ),
          },
          {
             header: "State License",
-            accessorKey: "state_lic",
+            accessorKey: "state_license",
             cell: ({ row }) => (
                <div className='font-mono text-sm text-gray-700'>
-                  {row.getValue("state_lic")}
+                  {row.getValue("state_license") || "N/A"}
+               </div>
+            ),
+         },
+         {
+            header: "Specialty",
+            accessorKey: "specialty",
+            cell: ({ row }) => (
+               <div className='font-medium text-primary-600'>
+                  {row.getValue("specialty") || "N/A"}
                </div>
             ),
          },
       ],
       formFields: [
          { key: "name", label: "Provider Name", type: "text" },
-         { key: "location", label: "Location", type: "text" },
+         {
+            key: "location_id",
+            label: "Location",
+            type: "select",
+            loadOptions: getLocationOptions,
+            placeholder: "Select a location...",
+         },
          { key: "address", label: "Address", type: "text", fullWidth: true },
          { key: "city", label: "City", type: "text" },
          {
@@ -124,13 +161,20 @@ export const tableConfigs = {
          },
          { key: "zip", label: "ZIP Code", type: "text" },
          { key: "phone", label: "Phone", type: "text" },
+         { key: "email", label: "Email", type: "text" },
          { key: "npi", label: "NPI", type: "text", className: "font-mono" },
          { key: "taxonomy_code", label: "Taxonomy Code", type: "text" },
          {
-            key: "state_lic",
+            key: "state_license",
             label: "State License",
             type: "text",
             className: "font-mono",
+         },
+         {
+            key: "specialty",
+            label: "Specialty",
+            type: "select",
+            options: specialtyOptions,
          },
       ],
    },
@@ -139,9 +183,8 @@ export const tableConfigs = {
       title: "Modifier Management",
       subtitle: "Manage medical procedure modifiers and codes",
       icon: FaCode,
-      gradientColors: "bg-gradient-to-r from-teal-600 to-green-600",
-      backgroundColor:
-         "bg-gradient-to-br from-teal-50 via-green-50 to-emerald-100",
+      gradientColors: "bg-primary-gradient",
+      backgroundColor: "",
       searchPlaceholder: "Search modifiers...",
       emptyMessage: "No modifier records found",
       columns: [
@@ -149,7 +192,7 @@ export const tableConfigs = {
             header: "Modifier Code",
             accessorKey: "modifier_code",
             cell: ({ row }) => (
-               <div className='font-mono font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded'>
+               <div className='font-mono font-semibold text-secondary-700 bg-secondary-50 px-2 py-1 rounded'>
                   {row.getValue("modifier_code")}
                </div>
             ),
@@ -187,32 +230,40 @@ export const tableConfigs = {
          {
             header: "Default",
             accessorKey: "is_default",
-            cell: ({ row }) => (
-               <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                     row.getValue("is_default") === "Yes"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-gray-100 text-gray-600"
-                  }`}
-               >
-                  {row.getValue("is_default")}
-               </span>
-            ),
+            cell: ({ row }) => {
+               const isDefault = row.getValue("is_default");
+               const displayValue = isDefault === true ? "Yes" : "No";
+               return (
+                  <span
+                     className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isDefault
+                           ? "bg-warning-100 text-warning-800"
+                           : "bg-gray-100 text-gray-600"
+                     }`}
+                  >
+                     {displayValue}
+                  </span>
+               );
+            },
          },
          {
             header: "Active",
             accessorKey: "is_active",
-            cell: ({ row }) => (
-               <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                     row.getValue("is_active") === "Yes"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                  }`}
-               >
-                  {row.getValue("is_active")}
-               </span>
-            ),
+            cell: ({ row }) => {
+               const isActive = row.getValue("is_active");
+               const displayValue = isActive === true ? "Yes" : "No";
+               return (
+                  <span
+                     className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isActive
+                           ? "bg-green-100 text-green-800"
+                           : "bg-red-100 text-red-800"
+                     }`}
+                  >
+                     {displayValue}
+                  </span>
+               );
+            },
          },
       ],
       formFields: [
@@ -257,7 +308,7 @@ export const tableConfigs = {
       title: "Procedure Management",
       subtitle: "Manage medical procedures and billing codes",
       icon: FaStethoscope,
-      gradientColors: "bg-gradient-to-r from-orange-600 to-red-600",
+      gradientColors: "bg-primary-gradient",
       backgroundColor:
          "bg-gradient-to-br from-orange-50 via-red-50 to-pink-100",
       searchPlaceholder: "Search procedures...",
@@ -265,10 +316,10 @@ export const tableConfigs = {
       columns: [
          {
             header: "CPT Code",
-            accessorKey: "cpt_code",
+            accessorKey: "procedure_code",
             cell: ({ row }) => (
-               <div className='font-mono font-semibold text-orange-700 bg-orange-50 px-2 py-1 rounded'>
-                  {row.getValue("cpt_code")}
+               <div className='font-mono font-semibold text-accent-700 bg-accent-50 px-2 py-1 rounded'>
+                  {row.getValue("procedure_code")}
                </div>
             ),
          },
@@ -283,10 +334,10 @@ export const tableConfigs = {
          },
          {
             header: "Fee",
-            accessorKey: "fee",
+            accessorKey: "amount",
             cell: ({ row }) => (
                <div className='font-semibold text-green-600'>
-                  ${parseFloat(row.getValue("fee") || 0).toFixed(2)}
+                  ${parseFloat(row.getValue("amount") || 0).toFixed(2)}
                </div>
             ),
          },
@@ -302,7 +353,7 @@ export const tableConfigs = {
       ],
       formFields: [
          {
-            key: "cpt_code",
+            key: "procedure_code",
             label: "CPT Code",
             type: "text",
             className: "font-mono",
@@ -314,8 +365,8 @@ export const tableConfigs = {
             fullWidth: true,
          },
          {
-            key: "fee",
-            label: "Fee",
+            key: "amount",
+            label: "Fee Amount",
             type: "text",
             placeholder: "Enter fee amount",
          },
@@ -325,6 +376,18 @@ export const tableConfigs = {
             type: "select",
             options: specialtyOptions,
          },
+         {
+            key: "category",
+            label: "Category",
+            type: "text",
+         },
+         {
+            key: "is_preferred",
+            label: "Is Preferred",
+            type: "select",
+            options: yesNoOptions,
+            defaultValue: "Yes",
+         },
       ],
    },
 
@@ -332,7 +395,7 @@ export const tableConfigs = {
       title: "Diagnosis Management",
       subtitle: "Manage medical diagnoses and ICD codes",
       icon: FaClipboardList,
-      gradientColors: "bg-gradient-to-r from-purple-600 to-pink-600",
+      gradientColors: "bg-primary-gradient",
       backgroundColor:
          "bg-gradient-to-br from-purple-50 via-pink-50 to-rose-100",
       searchPlaceholder: "Search diagnoses...",
@@ -340,10 +403,10 @@ export const tableConfigs = {
       columns: [
          {
             header: "ICD Code",
-            accessorKey: "icd_code",
+            accessorKey: "diagnosis_code",
             cell: ({ row }) => (
-               <div className='font-mono font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded'>
-                  {row.getValue("icd_code")}
+               <div className='font-mono font-semibold text-primary-700 bg-primary-50 px-2 py-1 rounded'>
+                  {row.getValue("diagnosis_code")}
                </div>
             ),
          },
@@ -363,7 +426,7 @@ export const tableConfigs = {
                <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
                      row.getValue("diagnosis_type") === "Primary"
-                        ? "bg-purple-100 text-purple-800"
+                        ? "bg-primary-100 text-primary-800"
                         : row.getValue("diagnosis_type") === "Secondary"
                         ? "bg-pink-100 text-pink-800"
                         : "bg-gray-100 text-gray-700"
@@ -374,26 +437,56 @@ export const tableConfigs = {
             ),
          },
          {
-            header: "Status",
-            accessorKey: "status",
+            header: "Category",
+            accessorKey: "category",
             cell: ({ row }) => (
-               <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                     row.getValue("status") === "Active"
-                        ? "bg-green-100 text-green-800"
-                        : row.getValue("status") === "Inactive"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
-                  }`}
-               >
-                  {row.getValue("status")}
+               <span className='px-2 py-1 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800'>
+                  {row.getValue("category")}
                </span>
             ),
+         },
+         {
+            header: "Status",
+            accessorKey: "is_active",
+            cell: ({ row }) => {
+               const isActive = row.getValue("is_active");
+               const displayValue = isActive === true ? "Active" : "Inactive";
+               return (
+                  <span
+                     className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isActive
+                           ? "bg-green-100 text-green-800"
+                           : "bg-red-100 text-red-800"
+                     }`}
+                  >
+                     {displayValue}
+                  </span>
+               );
+            },
+         },
+         {
+            header: "Preferred",
+            accessorKey: "is_preferred",
+            cell: ({ row }) => {
+               const isPreferred = row.getValue("is_preferred");
+               const displayValue = isPreferred === true ? "Yes" : "No";
+               return (
+                  <span
+                     className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        isPreferred
+                           ? "bg-warning-100 text-warning-800"
+                           : "bg-gray-100 text-gray-600"
+                     }`}
+                  >
+                     {displayValue}
+                  </span>
+               );
+            },
          },
       ],
       formFields: [
          {
-            key: "icd_code",
+            key: "diagnosis_code",
             label: "ICD Code",
             type: "text",
             className: "font-mono",
@@ -412,11 +505,29 @@ export const tableConfigs = {
             defaultValue: "Primary",
          },
          {
-            key: "status",
-            label: "Status",
+            key: "category",
+            label: "Category",
+            type: "text",
+         },
+         {
+            key: "is_preferred",
+            label: "Is Preferred",
             type: "select",
-            options: statusOptions,
-            defaultValue: "Active",
+            options: yesNoOptions,
+            defaultValue: "Yes",
+         },
+         {
+            key: "icd_version",
+            label: "ICD Version",
+            type: "text",
+            defaultValue: "ICD-10",
+         },
+         {
+            key: "is_active",
+            label: "Is Active",
+            type: "select",
+            options: yesNoOptions,
+            defaultValue: "Yes",
          },
       ],
    },
@@ -425,9 +536,8 @@ export const tableConfigs = {
       title: "Insurance Management",
       subtitle: "Manage insurance providers and coverage details",
       icon: FaShieldAlt,
-      gradientColors: "bg-gradient-to-r from-blue-600 to-indigo-600",
-      backgroundColor:
-         "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100",
+      gradientColors: "bg-primary-gradient",
+      backgroundColor: "",
       searchPlaceholder: "Search insurance providers...",
       emptyMessage: "No insurance records found",
       columns: [
@@ -435,7 +545,7 @@ export const tableConfigs = {
             header: "Insurance Name",
             accessorKey: "name",
             cell: ({ row }) => (
-               <div className='font-semibold text-blue-700'>
+               <div className='font-semibold text-primary-700'>
                   {row.getValue("name")}
                </div>
             ),
@@ -497,7 +607,7 @@ export const tableConfigs = {
       title: "Location Management",
       subtitle: "Manage medical facility locations and details",
       icon: FaMapMarkerAlt,
-      gradientColors: "bg-gradient-to-r from-green-600 to-teal-600",
+      gradientColors: "bg-primary-gradient",
       backgroundColor:
          "bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50",
       searchPlaceholder: "Search locations...",
@@ -517,7 +627,7 @@ export const tableConfigs = {
             header: "NPI",
             accessorKey: "npi",
             cell: ({ row }) => (
-               <div className='text-sm font-mono bg-blue-100 px-2 py-1 rounded'>
+               <div className='text-sm font-mono bg-primary-100 px-2 py-1 rounded'>
                   {row.original.npi}
                </div>
             ),
@@ -582,8 +692,8 @@ export const tableConfigs = {
       title: "Delete Visit Management",
       subtitle: "Manage deleted visit records and permanent deletion",
       icon: Trash2,
-      gradientColors: "bg-gradient-to-r from-red-600 to-rose-600",
-      backgroundColor: "bg-gradient-to-br from-red-50 via-rose-50 to-pink-100",
+      gradientColors: "bg-primary-gradient",
+      backgroundColor: "",
       searchPlaceholder: "Search deleted visits...",
       emptyMessage: "No deleted visit records found",
       columns: [

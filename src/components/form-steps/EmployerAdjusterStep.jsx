@@ -23,14 +23,14 @@ export function EmployerAdjusterStep({ data, onDataChange }) {
    return (
       <div className='space-y-6'>
          <div className='flex items-center space-x-3 mb-6'>
-            <div className='p-2 bg-purple-100 rounded-lg'>
-               <Building2 className='h-6 w-6 text-purple-600' />
+            <div className='p-2 bg-primary/10 rounded-lg'>
+               <Building2 className='h-6 w-6 text-primary' />
             </div>
             <div>
-               <h3 className='text-lg font-semibold text-gray-900'>
+               <h3 className='text-lg font-semibold text-foreground'>
                   Employer & Adjuster Information
                </h3>
-               <p className='text-gray-600'>
+               <p className='text-muted-foreground'>
                   Please provide employer and adjuster details
                </p>
             </div>
@@ -38,11 +38,11 @@ export function EmployerAdjusterStep({ data, onDataChange }) {
 
          <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
             {/* Employer Information */}
-            <Card className='border-0 shadow-sm bg-gradient-to-br from-purple-50 to-indigo-50'>
+            <Card className='border-0 shadow-sm bg-card/80'>
                <CardContent className='p-6'>
                   <div className='flex items-center space-x-2 mb-4'>
-                     <Building2 className='h-5 w-5 text-purple-600' />
-                     <h4 className='text-lg font-semibold text-gray-900'>
+                     <Building2 className='h-5 w-5 text-primary' />
+                     <h4 className='text-lg font-semibold text-foreground'>
                         Employer Information
                      </h4>
                   </div>
@@ -51,7 +51,7 @@ export function EmployerAdjusterStep({ data, onDataChange }) {
                      <div className='space-y-2'>
                         <Label
                            htmlFor='employer_name'
-                           className='text-sm font-medium text-gray-700'
+                           className='text-sm font-medium'
                         >
                            Employer Name
                         </Label>
@@ -68,7 +68,7 @@ export function EmployerAdjusterStep({ data, onDataChange }) {
                      <div className='space-y-2'>
                         <Label
                            htmlFor='employer_city'
-                           className='text-sm font-medium text-gray-700'
+                           className='text-sm font-medium'
                         >
                            City
                         </Label>
@@ -85,7 +85,7 @@ export function EmployerAdjusterStep({ data, onDataChange }) {
                      <div className='space-y-2'>
                         <Label
                            htmlFor='employer_address'
-                           className='text-sm font-medium text-gray-700'
+                           className='text-sm font-medium'
                         >
                            Address
                         </Label>
@@ -103,11 +103,11 @@ export function EmployerAdjusterStep({ data, onDataChange }) {
             </Card>
 
             {/* Adjuster Information */}
-            <Card className='border-0 shadow-sm bg-gradient-to-br from-indigo-50 to-blue-50'>
+            <Card className='border-0 shadow-sm bg-card/80'>
                <CardContent className='p-6'>
                   <div className='flex items-center space-x-2 mb-4'>
-                     <UserCheck className='h-5 w-5 text-indigo-600' />
-                     <h4 className='text-lg font-semibold text-gray-900'>
+                     <UserCheck className='h-5 w-5 text-secondary' />
+                     <h4 className='text-lg font-semibold text-foreground'>
                         Adjuster Information
                      </h4>
                   </div>
@@ -116,7 +116,7 @@ export function EmployerAdjusterStep({ data, onDataChange }) {
                      <div className='space-y-2'>
                         <Label
                            htmlFor='adjuster_name'
-                           className='text-sm font-medium text-gray-700'
+                           className='text-sm font-medium'
                         >
                            Adjuster Name
                         </Label>
@@ -132,10 +132,10 @@ export function EmployerAdjusterStep({ data, onDataChange }) {
 
                      {/* Placeholder for additional adjuster fields */}
                      <div className='space-y-2'>
-                        <Label className='text-sm font-medium text-gray-700'>
+                        <Label className='text-sm font-medium'>
                            Contact Information
                         </Label>
-                        <div className='text-sm text-gray-500 italic'>
+                        <div className='text-sm text-muted-foreground italic'>
                            Additional adjuster details can be added during case
                            processing
                         </div>

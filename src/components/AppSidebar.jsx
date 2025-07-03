@@ -43,7 +43,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AuthContext } from "@/App";
-import logoImage from "../assets/logo.png";
+import logoImage from "../assets/WorknoFault.png";
 
 // Menu items configuration
 const menuItems = [
@@ -266,6 +266,20 @@ export function AppSidebar({ setRouteName, ...props }) {
       }
    }, [searchTerm, filteredMenuItems]);
 
+   // Auto-open menus when a child route is active
+   useEffect(() => {
+      const newOpenMenus = new Set(openMenus);
+      menuItems.forEach((item) => {
+         if (
+            item.submenu &&
+            item.submenu.some((subItem) => location.pathname === subItem.path)
+         ) {
+            newOpenMenus.add(item.label);
+         }
+      });
+      setOpenMenus(newOpenMenus);
+   }, [location.pathname]);
+
    // Keyboard navigation
    const handleKeyDown = useCallback(
       (e) => {
@@ -329,35 +343,35 @@ export function AppSidebar({ setRouteName, ...props }) {
          className='group-data-[side=left]:border-r-0'
       >
          {/* Header */}
-         <SidebarHeader className='bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 relative overflow-hidden'>
+         <SidebarHeader className='bg-white dark:bg-gray-950 relative overflow-hidden'>
             {/* Background Pattern */}
-            <div className='absolute inset-0 opacity-10'>
-               <div className='absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-600/20'></div>
-               <div className='absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.15),transparent_50%)]'></div>
+            <div className='absolute inset-0 opacity-5'>
+               <div className='absolute inset-0 bg-primary/5'></div>
+               <div className='absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,var(--primary)/0.05,transparent_50%)]'></div>
             </div>
 
             <div className='flex items-center gap-3 px-3 py-1 relative z-10'>
                <div className='relative group'>
-                  <div className='h-10 w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform transition-transform duration-200 group-hover:scale-105 ring-2 ring-white/20'>
-                     <div className='text-white font-bold text-lg'>W</div>
+                  <div className='h-10 w-auto transform transition-transform duration-200 group-hover:scale-105'>
+                     <img
+                        src={logoImage}
+                        alt='WorkNoFault'
+                        className='h-10 object-contain'
+                     />
                   </div>
-                  <div className='absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full shadow-sm animate-pulse border border-white'></div>
                </div>
-               <div className='group-data-[collapsible=icon]:hidden'>
-                  <h2 className='text-lg font-bold text-blue-900 dark:text-blue-100 tracking-tight'>
-                     WorkNoFault
-                  </h2>
-                  <p className='text-xs text-blue-600 dark:text-blue-300 font-medium'>
+               {/* <div className='group-data-[collapsible=icon]:hidden'>
+                  <p className='text-xs text-primary-600 dark:text-primary-300 font-medium'>
                      Healthcare Management
                   </p>
-               </div>
+               </div> */}
             </div>
          </SidebarHeader>
 
          {/* Content */}
-         <SidebarContent className='bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 relative'>
+         <SidebarContent className='bg-white dark:bg-gray-950 relative'>
             {/* Subtle overlay pattern */}
-            <div className='absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.02),transparent_70%)] pointer-events-none'></div>
+            <div className='absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,var(--primary)/0.02,transparent_70%)] pointer-events-none'></div>
 
             {/* Search */}
             {/* <SidebarSearch
@@ -392,7 +406,7 @@ export function AppSidebar({ setRouteName, ...props }) {
                      const hasActiveChild = item.submenu?.some(
                         (subItem) => location.pathname === subItem.path
                      );
-                     const isActive = isItemActive;
+                     const isActive = isItemActive || hasActiveChild;
                      const isHighlighted =
                         item.path && isItemHighlighted(item.path);
 
@@ -412,12 +426,12 @@ export function AppSidebar({ setRouteName, ...props }) {
                                        h-11 rounded-xl transition-all duration-200 
                                        ${
                                           isActive
-                                             ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-menu-active transform scale-105"
-                                             : "hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-gray-800 hover:shadow-sm"
+                                             ? "bg-sidebar-primary  shadow-menu-active transform scale-105"
+                                             : "hover:bg-primary/10 hover:text-primary dark:hover:bg-sidebar-accent hover:shadow-sm"
                                        }
                                        ${
                                           isHighlighted
-                                             ? "ring-2 ring-blue-300 bg-blue-50 shadow-glow-blue"
+                                             ? "ring-2 ring-primary bg-sidebar-primary shadow-glow-primary"
                                              : ""
                                        }
                                     `}
@@ -448,14 +462,14 @@ export function AppSidebar({ setRouteName, ...props }) {
                                                 ${
                                                    location.pathname ===
                                                    subItem.path
-                                                      ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-menu-active"
-                                                      : "hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-gray-800 hover:shadow-sm"
+                                                      ? "bg-sidebar-primary text-primary-foreground shadow-menu-active"
+                                                      : "hover:bg-primary/20 hover:text-primary dark:hover:bg-sidebar-accent hover:shadow-sm"
                                                 }
                                                 ${
                                                    isItemHighlighted(
                                                       subItem.path
                                                    )
-                                                      ? "ring-2 ring-blue-300 bg-blue-50 shadow-glow-blue"
+                                                      ? "ring-2 ring-primary bg-sidebar-primary shadow-glow-primary"
                                                       : ""
                                                 }
                                              `}
@@ -494,12 +508,12 @@ export function AppSidebar({ setRouteName, ...props }) {
                                  h-11 rounded-xl transition-all duration-200 
                                  ${
                                     isActive
-                                       ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-menu-active transform scale-105"
-                                       : "hover:bg-blue-50 hover:text-blue-900 dark:hover:bg-gray-800 hover:shadow-sm"
+                                       ? "active:bg-sidebar-primary text-primary-foreground shadow-menu-active transform scale-105"
+                                       : "hover:bg-primary/20 hover:text-primary dark:hover:bg-sidebar-accent hover:shadow-sm"
                                  }
                                  ${
                                     isHighlighted
-                                       ? "ring-2 ring-blue-300 bg-blue-50 shadow-glow-blue"
+                                       ? "ring-2 ring-primary/10 bg-sidebar-primary shadow-glow-primary"
                                        : ""
                                  }
                               `}
@@ -515,18 +529,18 @@ export function AppSidebar({ setRouteName, ...props }) {
          </SidebarContent>
 
          {/* Footer */}
-         <SidebarFooter className='bg-gradient-to-br from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 p-2 relative overflow-hidden'>
+         <SidebarFooter className='bg-white dark:bg-gray-950 p-2 relative overflow-hidden border-t border-gray-100 dark:border-gray-800'>
             {/* Background Pattern */}
             <div className='absolute inset-0 opacity-5'>
-               <div className='absolute inset-0 bg-gradient-to-tr from-red-400/20 to-pink-600/20'></div>
+               <div className='absolute inset-0 bg-primary/5'></div>
             </div>
 
             <SidebarMenu className='relative z-10'>
                <SidebarMenuItem className='space-y-1'>
                   <div className='flex items-center justify-between gap-2 p-1.5 hover:bg-accent/80 rounded-lg transition-colors duration-200 cursor-pointer group'>
                      <div className='flex items-center gap-2'>
-                        <div className='h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center ring-2 ring-background shadow-sm'>
-                           <User className='h-4 w-4 text-white' />
+                        <div className='h-8 w-8 bg-primary-gradient rounded-full flex items-center justify-center ring-2 ring-background shadow-sm'>
+                           <User className='h-4 w-4 text-primary-foreground' />
                         </div>
                         <div className='hidden md:flex flex-col text-left'>
                            <span className='text-sm font-medium text-foreground'>
@@ -544,7 +558,7 @@ export function AppSidebar({ setRouteName, ...props }) {
                         logout();
                         navigate("/login");
                      }}
-                     className='h-11 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 transition-all duration-200 font-medium group'
+                     className='h-11 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive dark:text-destructive dark:hover:bg-destructive/20 transition-all duration-200 font-medium group'
                   >
                      <LogOut className='h-4 w-4 transition-transform group-hover:scale-110' />
                      <span>Logout</span>

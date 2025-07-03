@@ -7,6 +7,7 @@ import {
    TableHeader,
    TableRow,
 } from "@/components/ui/table";
+import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +28,22 @@ import {
    DropdownMenuItem,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogHeader,
+   DialogTitle,
+} from "@/components/ui/dialog";
+import {
+   Select,
+   SelectContent,
+   SelectItem,
+   SelectTrigger,
+   SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import ConfirmationDialog from "@/components/ui/confirmation-dialog";
 import jQuery from "jquery";
 import "datatables.net-dt";
 import "datatables.net-buttons-dt";
@@ -45,6 +62,7 @@ export function ModernDataTable({
    onSave,
    onDelete,
    onBulkDelete,
+   onBulkRestore, // Add support for bulk restore
    onInputChange,
    onAdd,
    searchable = true,
@@ -53,14 +71,32 @@ export function ModernDataTable({
    actions = true,
    className = "",
    emptyMessage = "No data available",
+   customActions = [], // New prop for custom action buttons
+   formFields = [], // Form fields for edit modal
+   dynamicOptions = {}, // Dynamic options for select fields
 }) {
    const [selectedRows, setSelectedRows] = useState(new Set());
    const [searchTerm, setSearchTerm] = useState("");
    const [filteredData, setFilteredData] = useState(data);
+   const [editModalOpen, setEditModalOpen] = useState(false);
+   const [editingRecord, setEditingRecord] = useState(null);
+   const [editFormData, setEditFormData] = useState({});
+   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+   const [deleteTarget, setDeleteTarget] = useState(null);
+   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
    // Filter data based on search term
    useEffect(() => {
+      console.log("ModernDataTable - data prop received:", data);
+      console.log("ModernDataTable - data type:", typeof data);
+      console.log("ModernDataTable - is array:", Array.isArray(data));
+      console.log(
+         "ModernDataTable - data length:",
+         Array.isArray(data) ? data.length : "N/A"
+      );
+
       if (!searchTerm || !Array.isArray(data)) {
+         console.log("ModernDataTable - setting filteredData to:", data || []);
          setFilteredData(data || []);
          return;
       }
@@ -75,6 +111,7 @@ export function ModernDataTable({
                   .includes(searchTerm.toLowerCase())
          )
       );
+      console.log("ModernDataTable - setting filtered data to:", filtered);
       setFilteredData(filtered);
    }, [data, searchTerm, columns]);
 
@@ -104,17 +141,98 @@ export function ModernDataTable({
 
    // Handle bulk delete
    const handleBulkDelete = () => {
-      if (selectedRows.size === 0) return;
+      if (selectedRows.size === 0) {
+         console.log("ModernDataTable: No rows selected for bulk delete");
+         return;
+      }
 
-      if (
-         window.confirm(
-            `Are you sure you want to delete ${selectedRows.size} selected items?`
-         )
-      ) {
-         if (onBulkDelete) {
-            onBulkDelete(Array.from(selectedRows));
-         }
-         setSelectedRows(new Set());
+      // Convert Set to Array for GenericTable
+      const selectedRowsArray = Array.from(selectedRows);
+      console.log(
+         "ModernDataTable: Sending bulk delete for IDs:",
+         selectedRowsArray
+      );
+
+      // Direct call to onBulkDelete without showing the modal
+      // This way, only the GenericTable's confirmation will be shown
+      if (onBulkDelete) {
+         onBulkDelete(selectedRowsArray);
+      }
+   };
+
+   // Handle bulk restore
+   const handleBulkRestore = () => {
+      if (selectedRows.size === 0) {
+         console.log("ModernDataTable: No rows selected for bulk restore");
+         return;
+      }
+
+      // Convert Set to Array for GenericTable
+      const selectedRowsArray = Array.from(selectedRows);
+      console.log(
+         "ModernDataTable: Sending bulk restore for IDs:",
+         selectedRowsArray
+      );
+
+      // Direct call to onBulkRestore
+      if (onBulkRestore) {
+         onBulkRestore(selectedRowsArray);
+      }
+   };
+
+   // Keep this for backward compatibility but it won't be used with GenericTable
+   const confirmBulkDelete = () => {
+      if (onBulkDelete) {
+         onBulkDelete(Array.from(selectedRows));
+      }
+      setSelectedRows(new Set());
+      setBulkDeleteConfirmOpen(false);
+   };
+
+   // Handle single delete
+   const handleSingleDelete = (rowId) => {
+      // Direct call to onDelete without showing the modal
+      // This way, only the GenericTable's confirmation will be shown
+      if (onDelete) {
+         onDelete(rowId);
+      }
+   };
+
+   // Keep this for backward compatibility but it won't be used with GenericTable
+   const confirmSingleDelete = () => {
+      if (onDelete && deleteTarget) {
+         onDelete(deleteTarget);
+      }
+      setDeleteTarget(null);
+      setDeleteConfirmOpen(false);
+   };
+
+   // Handle edit
+   const handleEditClick = (rowId, rowData) => {
+      if (onEdit) {
+         // If external edit handler provided, use it
+         onEdit(rowData);
+      } else {
+         // Otherwise use internal modal
+         setEditingRecord(rowData);
+         setEditFormData({ ...rowData });
+         setEditModalOpen(true);
+      }
+   };
+
+   const handleEditFormChange = (field, value) => {
+      setEditFormData((prev) => ({
+         ...prev,
+         [field]: value,
+      }));
+   };
+
+   const handleSaveEdit = () => {
+      if (onSave && editingRecord) {
+         onSave(editFormData);
+         setEditModalOpen(false);
+         setEditingRecord(null);
+         setEditFormData({});
       }
    };
 
@@ -155,7 +273,7 @@ export function ModernDataTable({
       selectedRows.size > 0 && selectedRows.size < filteredData.length;
 
    return (
-      <Card className={`w-full border-none ${className}`}>
+      <Card className={`w-full ${className}`}>
          <CardHeader>
             <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
                <CardTitle className='text-xl font-semibold'>{title}</CardTitle>
@@ -164,9 +282,11 @@ export function ModernDataTable({
                   {/* Search */}
                   {searchable && (
                      <div className='relative'>
-                        <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+                        <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
                         <Input
                            placeholder='Search...'
+                           id='data-table-search'
+                           name='search'
                            value={searchTerm}
                            onChange={(e) => setSearchTerm(e.target.value)}
                            className='pl-10 w-64'
@@ -180,6 +300,17 @@ export function ModernDataTable({
                         <Badge variant='secondary'>
                            {selectedRows.size} selected
                         </Badge>
+                        {onBulkRestore && (
+                           <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={handleBulkRestore}
+                              className='flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-300'
+                           >
+                              <RotateCcw className='h-4 w-4' />
+                              Restore Selected
+                           </Button>
+                        )}
                         <Button
                            variant='destructive'
                            size='sm'
@@ -227,8 +358,13 @@ export function ModernDataTable({
 
          <CardContent>
             {filteredData.length === 0 ? (
-               <div className='text-center py-12 text-gray-500'>
+               <div className='text-center py-12 text-muted-foreground'>
                   <p className='text-lg'>{emptyMessage}</p>
+                  <p className='text-sm text-gray-500'>
+                     {`Debug - Data: ${typeof filteredData}, Is Array: ${Array.isArray(
+                        filteredData
+                     )}, Length: ${filteredData.length}`}
+                  </p>
                </div>
             ) : (
                <div className='rounded-md border overflow-hidden'>
@@ -279,8 +415,8 @@ export function ModernDataTable({
                         {filteredData.map((row) => (
                            <TableRow
                               key={row.id}
-                              className={`hover:bg-gray-50 transition-colors ${
-                                 selectedRows.has(row.id) ? "bg-blue-50" : ""
+                              className={`hover:bg-muted transition-colors ${
+                                 selectedRows.has(row.id) ? "bg-primary/10" : ""
                               }`}
                            >
                               {/* Bulk Select Cell */}
@@ -310,6 +446,8 @@ export function ModernDataTable({
                                        {editId === row.id ? (
                                           <Input
                                              type='text'
+                                             id={`edit-${column.accessorKey}-${row.id}`}
+                                             name={`edit-${column.accessorKey}`}
                                              value={
                                                 editedData[
                                                    column.accessorKey
@@ -348,7 +486,7 @@ export function ModernDataTable({
                                                 onClick={onSave}
                                                 className='h-8 w-8 p-0'
                                              >
-                                                <FaSave className='h-4 w-4 text-green-600' />
+                                                <FaSave className='h-4 w-4 text-success' />
                                              </Button>
                                              <Button
                                                 size='sm'
@@ -356,31 +494,74 @@ export function ModernDataTable({
                                                 onClick={() => onEdit?.(null)}
                                                 className='h-8 w-8 p-0'
                                              >
-                                                <FaTimes className='h-4 w-4 text-gray-600' />
+                                                <FaTimes className='h-4 w-4 text-muted-foreground' />
                                              </Button>
                                           </>
                                        ) : (
                                           <>
-                                             <Button
-                                                size='sm'
-                                                variant='outline'
-                                                onClick={() =>
-                                                   onEdit?.(row.id, row)
-                                                }
-                                                className='h-8 w-8 p-0'
-                                             >
-                                                <FaEdit className='h-4 w-4 text-blue-600' />
-                                             </Button>
-                                             <Button
-                                                size='sm'
-                                                variant='outline'
-                                                onClick={() =>
-                                                   onDelete?.(row.id)
-                                                }
-                                                className='h-8 w-8 p-0'
-                                             >
-                                                <FaTrash className='h-4 w-4 text-red-600' />
-                                             </Button>
+                                             {/* Custom Actions First */}
+                                             {customActions &&
+                                                customActions.map(
+                                                   (action, index) => (
+                                                      <Button
+                                                         key={index}
+                                                         size='sm'
+                                                         variant={
+                                                            action.variant ||
+                                                            "outline"
+                                                         }
+                                                         onClick={() =>
+                                                            action.onClick?.(
+                                                               row.id
+                                                            )
+                                                         }
+                                                         className={`h-8 w-8 p-0 ${
+                                                            action.className ||
+                                                            ""
+                                                         }`}
+                                                         title={action.label}
+                                                      >
+                                                         {action.icon ? (
+                                                            <action.icon className='h-4 w-4' />
+                                                         ) : (
+                                                            <span className='text-xs'>
+                                                               {action.label}
+                                                            </span>
+                                                         )}
+                                                      </Button>
+                                                   )
+                                                )}
+
+                                             {/* Default Edit Button */}
+                                             {(onEdit || onSave) && (
+                                                <Button
+                                                   size='sm'
+                                                   variant='outline'
+                                                   onClick={() =>
+                                                      handleEditClick(
+                                                         row.id,
+                                                         row
+                                                      )
+                                                   }
+                                                   className='h-8 w-8 p-0'
+                                                >
+                                                   <FaEdit className='h-4 w-4 text-primary' />
+                                                </Button>
+                                             )}
+
+                                             {/* Default Delete Button */}
+                                             {onDelete && (
+                                                <Button
+                                                   size='sm'
+                                                   variant='outline'
+                                                   onClick={() =>
+                                                      handleSingleDelete(row.id)
+                                                   }
+                                                   className='h-8 w-8 p-0'
+                                                >
+                                                   <FaTrash className='h-4 w-4 text-destructive' />
+                                                </Button>
+                                             )}
                                           </>
                                        )}
                                     </div>
@@ -393,6 +574,88 @@ export function ModernDataTable({
                </div>
             )}
          </CardContent>
+
+         {/* Edit Modal */}
+         <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+            <DialogContent className='sm:max-w-[600px]'>
+               <DialogHeader>
+                  <DialogTitle>Edit {title}</DialogTitle>
+                  <DialogDescription>
+                     Make changes to the record and click save when done.
+                  </DialogDescription>
+               </DialogHeader>
+
+               <div className='grid gap-4 py-4'>
+                  {formFields.map((field) => (
+                     <div
+                        className='grid grid-cols-4 items-center gap-4'
+                        key={field.key}
+                     >
+                        <Label htmlFor={field.key} className='text-right'>
+                           {field.label}
+                        </Label>
+
+                        {field.type === "select" ? (
+                           <div className='col-span-3'>
+                              <Select
+                                 value={editFormData[field.key] || ""}
+                                 onValueChange={(value) =>
+                                    handleEditFormChange(field.key, value)
+                                 }
+                              >
+                                 <SelectTrigger>
+                                    <SelectValue
+                                       placeholder={`Select ${field.label}`}
+                                    />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                    {(field.loadOptions &&
+                                    dynamicOptions[field.key]
+                                       ? dynamicOptions[field.key]
+                                       : field.options || []
+                                    ).map((option) => (
+                                       <SelectItem
+                                          key={option.value}
+                                          value={option.value.toString()}
+                                       >
+                                          {option.label}
+                                       </SelectItem>
+                                    ))}
+                                 </SelectContent>
+                              </Select>
+                           </div>
+                        ) : (
+                           <Input
+                              id={field.key}
+                              type={field.type || "text"}
+                              className='col-span-3'
+                              value={editFormData[field.key] || ""}
+                              onChange={(e) =>
+                                 handleEditFormChange(field.key, e.target.value)
+                              }
+                           />
+                        )}
+                     </div>
+                  ))}
+               </div>
+
+               <div className='flex justify-end gap-2'>
+                  <Button
+                     variant='outline'
+                     onClick={() => setEditModalOpen(false)}
+                  >
+                     Cancel
+                  </Button>
+                  <Button onClick={handleSaveEdit}>Save Changes</Button>
+               </div>
+            </DialogContent>
+         </Dialog>
+
+         {/* 
+            Confirmation dialogs are removed from ModernDataTable 
+            to avoid duplicate confirmations with GenericTable
+            The dialogs now show only from the GenericTable component
+         */}
       </Card>
    );
 }

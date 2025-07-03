@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
    Bell,
    Search,
@@ -48,24 +48,154 @@ import {
 } from "recharts/lib/index";
 import { StatCard } from "@/components/ui/stat-card";
 import { SurgeryStats } from "@/components/ui/surgery-stats";
+import { dashboardService } from "@/services/dashboardService";
+import { supabase } from "@/lib/supabaseClient";
 import { DoctorsList } from "@/components/ui/doctors-list";
 import { statsData, chartData, patientSampleData, doctors } from "@/data";
 
 const Dashboard = () => {
    const [search, setSearch] = useState("");
    const [selectedTimeRange, setSelectedTimeRange] = useState("12 months");
+   const [dashboardData, setDashboardData] = useState({
+      stats: [],
+      recentAppointments: [],
+      chartData: [],
+      loading: true,
+   });
+
+   // Fetch real-time dashboard data
+   useEffect(() => {
+      const fetchDashboardData = async () => {
+         try {
+            // Get complete dashboard data
+            const [statsResult, appointmentsResult, trendsResult] =
+               await Promise.all([
+                  dashboardService.getDashboardStats(),
+                  dashboardService.getRecentAppointments(5),
+                  dashboardService.getAppointmentTrends(7),
+               ]);
+
+            if (statsResult.error) {
+               console.error("Error fetching stats:", statsResult.error);
+               return;
+            }
+
+            // Format stats for the UI
+            const formattedStats = [
+               {
+                  title: "Today's Appointments",
+                  value: statsResult.data?.todayAppointments || 0,
+                  icon: "Calendar",
+                  trend: "up",
+                  change: "+12%",
+               },
+               {
+                  title: "Total Patients",
+                  value: statsResult.data?.totalPatients || 0,
+                  icon: "Users",
+                  trend: "up",
+                  change: "+5%",
+               },
+               {
+                  title: "Active Providers",
+                  value: statsResult.data?.totalProviders || 0,
+                  icon: "UserPlus",
+                  trend: "up",
+                  change: "+3%",
+               },
+               {
+                  title: "Weekly Completed",
+                  value: statsResult.data?.weeklyCompletedAppointments || 0,
+                  icon: "Activity",
+                  trend: "up",
+                  change: "+18%",
+               },
+            ];
+
+            // Format trends data for charts
+            const chartDataFormatted =
+               trendsResult.data?.map((trend) => ({
+                  name: new Date(trend.date).toLocaleDateString("en-US", {
+                     weekday: "short",
+                  }),
+                  Completed: trend.completed || 0,
+                  Scheduled: trend.scheduled || 0,
+                  New: trend.new_patients || 0,
+               })) || [];
+
+            setDashboardData({
+               stats: formattedStats,
+               recentAppointments: appointmentsResult.data || [],
+               chartData: chartDataFormatted,
+               loading: false,
+            });
+         } catch (error) {
+            console.error("Error:", error);
+            setDashboardData((prev) => ({ ...prev, loading: false }));
+         }
+      };
+
+      fetchDashboardData();
+
+      // Set up real-time subscriptions for live updates
+      const appointmentsSubscription = supabase
+         .channel("dashboard-appointments")
+         .on(
+            "postgres_changes",
+            {
+               event: "*",
+               schema: "public",
+               table: "appointments",
+            },
+            () => {
+               fetchDashboardData(); // Refresh data when appointments change
+            }
+         )
+         .subscribe();
+
+      const patientsSubscription = supabase
+         .channel("dashboard-patients")
+         .on(
+            "postgres_changes",
+            {
+               event: "*",
+               schema: "public",
+               table: "patients",
+            },
+            () => {
+               fetchDashboardData(); // Refresh data when patients change
+            }
+         )
+         .subscribe();
+
+      return () => {
+         appointmentsSubscription.unsubscribe();
+         patientsSubscription.unsubscribe();
+      };
+   }, []);
 
    const filteredDoctors = doctors.filter((doctor) =>
       doctor.name.toLowerCase().includes(search.toLowerCase())
    );
 
-   // Chart data from static data
-   const chartDataFormatted = chartData.months.map((month, index) => ({
-      name: month,
-      Completed: chartData.completedData[index],
-      Active: chartData.activeData[index],
-      New: chartData.newData[index],
-   }));
+   // Use real-time data or fallback to static data
+   const displayStats =
+      dashboardData.stats.length > 0 ? dashboardData.stats : statsData;
+   const displayAppointments =
+      dashboardData.recentAppointments.length > 0
+         ? dashboardData.recentAppointments
+         : patientSampleData;
+
+   // Chart data from real-time data or static data
+   const chartDataFormatted =
+      dashboardData.chartData.length > 0
+         ? dashboardData.chartData
+         : chartData.months.map((month, index) => ({
+              name: month,
+              Completed: chartData.completedData[index],
+              Active: chartData.activeData[index],
+              New: chartData.newData[index],
+           }));
 
    // Enhanced stats with icons mapping
    const iconMap = {
@@ -75,32 +205,32 @@ const Dashboard = () => {
       Activity,
    };
 
-   const enhancedStats = statsData.map((stat) => ({
+   const enhancedStats = displayStats.map((stat) => ({
       ...stat,
       icon: iconMap[stat.icon] || Users,
    }));
    return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50'>
+      <div className='min-h-screen'>
          <div className='p-6 space-y-6'>
             {/* Auth Status - For development purposes only */}
             {/* {process.env.NODE_ENV !== "production" && <AuthStatus />} */}
             {/* Modern Header Section */}
-            <div className='flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100'>
+            <div className='flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card text-card-foreground rounded-xl p-6 shadow-sm border'>
                <div className='flex-1'>
-                  <h1 className='text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2'>
+                  <h1 className='text-4xl font-bold text-primary mb-2'>
                      Healthcare Dashboard
                   </h1>
-                  <p className='text-gray-600 text-lg'>
+                  <p className='text-muted-foreground text-lg'>
                      Welcome back! Here's what's happening at your clinic today.
                   </p>
                </div>
 
                <div className='flex items-center gap-4'>
                   <div className='relative'>
-                     <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
+                     <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                      <Input
                         placeholder='Search patients, doctors...'
-                        className='pl-10 w-80 h-12 border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className='pl-10 w-80 h-12'
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                      />
@@ -109,10 +239,10 @@ const Dashboard = () => {
                   {/* <div className='flex items-center gap-3'>
                      <DropdownMenu>
                         <DropdownMenuTrigger className='focus:outline-none'>
-                           <div className='relative p-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-colors'>
-                              <Bell className='h-6 w-6 text-blue-600' />
-                              <div className='absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center'>
-                                 <span className='text-xs text-white font-medium'>
+                           <div className='relative p-3 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors'>
+                              <Bell className='h-6 w-6 text-primary' />
+                              <div className='absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center'>
+                                 <span className='text-xs text-destructive-foreground font-medium'>
                                     3
                                  </span>
                               </div>
@@ -124,7 +254,7 @@ const Dashboard = () => {
                                  <p className='font-medium'>
                                     New Patient Alert
                                  </p>
-                                 <p className='text-sm text-gray-600'>
+                                 <p className='text-sm text-muted-foreground'>
                                     John Doe registered for emergency
                                     consultation
                                  </p>
@@ -135,7 +265,7 @@ const Dashboard = () => {
                                  <p className='font-medium'>
                                     Appointment Reminder
                                  </p>
-                                 <p className='text-sm text-gray-600'>
+                                 <p className='text-sm text-muted-foreground'>
                                     3 appointments scheduled for today
                                  </p>
                               </div>
@@ -143,8 +273,8 @@ const Dashboard = () => {
                         </DropdownMenuContent>
                      </DropdownMenu>
 
-                     <button className='p-3 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors'>
-                        <Settings className='h-6 w-6 text-gray-600' />
+                     <button className='p-3 rounded-full bg-muted/50 hover:bg-muted/60 transition-colors'>
+                        <Settings className='h-6 w-6 text-muted-foreground' />
                      </button>
                   </div> */}
                </div>
@@ -159,10 +289,10 @@ const Dashboard = () => {
                      <CardContent className='p-6'>
                         <div className='flex items-center justify-between'>
                            <div className='space-y-2'>
-                              <p className='text-sm font-medium text-gray-600'>
+                              <p className='text-sm font-medium text-muted-foreground'>
                                  {stat.title}
                               </p>
-                              <p className='text-3xl font-bold text-gray-900'>
+                              <p className='text-3xl font-bold text-foreground'>
                                  {stat.value}
                               </p>
                               <div className='flex items-center space-x-2'>
@@ -174,8 +304,8 @@ const Dashboard = () => {
                                     }
                                     className={`text-xs ${
                                        stat.trend === "up"
-                                          ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                          : "bg-red-100 text-red-700 hover:bg-red-200"
+                                          ? "bg-success-soft text-success-strong hover:bg-success-soft/80"
+                                          : "bg-destructive-soft text-destructive-strong hover:bg-destructive-soft/80"
                                     }`}
                                  >
                                     {stat.trend === "up" ? "↗" : "↘"}{" "}
@@ -183,28 +313,8 @@ const Dashboard = () => {
                                  </Badge>
                               </div>
                            </div>
-                           <div
-                              className={`p-3 rounded-full ${
-                                 index % 4 === 0
-                                    ? "bg-blue-100"
-                                    : index % 4 === 1
-                                    ? "bg-green-100"
-                                    : index % 4 === 2
-                                    ? "bg-purple-100"
-                                    : "bg-orange-100"
-                              } group-hover:scale-110 transition-transform duration-300`}
-                           >
-                              <stat.icon
-                                 className={`h-8 w-8 ${
-                                    index % 4 === 0
-                                       ? "text-blue-600"
-                                       : index % 4 === 1
-                                       ? "text-green-600"
-                                       : index % 4 === 2
-                                       ? "text-purple-600"
-                                       : "text-orange-600"
-                                 }`}
-                              />
+                           <div className='p-3 rounded-full bg-primary/10 group-hover:scale-110 transition-transform duration-300'>
+                              <stat.icon className='h-8 w-8 text-primary' />
                            </div>
                         </div>
                      </CardContent>
@@ -217,7 +327,7 @@ const Dashboard = () => {
                <Card className='xl:col-span-2 border-0 shadow-lg'>
                   <CardHeader className='pb-4'>
                      <div className='flex items-center justify-between'>
-                        <CardTitle className='text-xl font-semibold text-gray-900'>
+                        <CardTitle className='text-xl font-semibold text-foreground'>
                            Patient Statistics
                         </CardTitle>
                         <DropdownMenu>
@@ -269,29 +379,30 @@ const Dashboard = () => {
                               />
                               <Tooltip
                                  contentStyle={{
-                                    backgroundColor: "white",
-                                    border: "1px solid #e5e7eb",
+                                    backgroundColor: "hsl(var(--background))",
+                                    border: "1px solid hsl(var(--border))",
                                     borderRadius: "8px",
                                     boxShadow:
                                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                                    color: "hsl(var(--foreground))",
                                  }}
                               />
                               <Legend />
                               <Bar
                                  dataKey='Completed'
-                                 fill='#3b82f6'
+                                 fill='hsl(var(--primary))'
                                  radius={[4, 4, 0, 0]}
                                  name='Completed Cases'
                               />
                               <Bar
                                  dataKey='Active'
-                                 fill='#10b981'
+                                 fill='hsl(var(--success))'
                                  radius={[4, 4, 0, 0]}
                                  name='Active Cases'
                               />
                               <Bar
                                  dataKey='New'
-                                 fill='#f59e0b'
+                                 fill='hsl(var(--warning))'
                                  radius={[4, 4, 0, 0]}
                                  name='New Cases'
                               />
@@ -304,52 +415,54 @@ const Dashboard = () => {
                {/* Quick Stats */}
                <Card className='border-0 shadow-lg'>
                   <CardHeader>
-                     <CardTitle className='text-lg font-semibold text-gray-900'>
+                     <CardTitle className='text-lg font-semibold text-foreground'>
                         Quick Overview
                      </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-4'>
                      <div className='grid grid-cols-2 gap-4'>
-                        <div className='text-center p-4 bg-blue-50 rounded-lg'>
-                           <Calendar className='h-8 w-8 text-blue-600 mx-auto mb-2' />
-                           <p className='text-2xl font-bold text-gray-900'>
+                        <div className='text-center p-4 bg-primary/10 rounded-lg'>
+                           <Calendar className='h-8 w-8 text-primary mx-auto mb-2' />
+                           <p className='text-2xl font-bold text-foreground'>
                               24
                            </p>
-                           <p className='text-sm text-gray-600'>
+                           <p className='text-sm text-muted-foreground'>
                               Today's Appointments
                            </p>
                         </div>
-                        <div className='text-center p-4 bg-green-50 rounded-lg'>
-                           <Heart className='h-8 w-8 text-green-600 mx-auto mb-2' />
-                           <p className='text-2xl font-bold text-gray-900'>
+                        <div className='text-center p-4 bg-success/10 rounded-lg'>
+                           <Heart className='h-8 w-8 text-success mx-auto mb-2' />
+                           <p className='text-2xl font-bold text-foreground'>
                               18
                            </p>
-                           <p className='text-sm text-gray-600'>
+                           <p className='text-sm text-muted-foreground'>
                               Surgeries This Week
                            </p>
                         </div>
                      </div>
                      <div className='space-y-3'>
-                        <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
+                        <div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg'>
                            <div className='flex items-center space-x-3'>
-                              <div className='w-3 h-3 bg-green-500 rounded-full'></div>
-                              <span className='text-sm font-medium'>
+                              <div className='w-3 h-3 bg-success rounded-full'></div>
+                              <span className='text-sm font-medium text-foreground'>
                                  Emergency Ward
                               </span>
                            </div>
                            <Badge variant='secondary'>Available</Badge>
                         </div>
-                        <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
+                        <div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg'>
                            <div className='flex items-center space-x-3'>
-                              <div className='w-3 h-3 bg-yellow-500 rounded-full'></div>
-                              <span className='text-sm font-medium'>ICU</span>
+                              <div className='w-3 h-3 bg-warning rounded-full'></div>
+                              <span className='text-sm font-medium text-foreground'>
+                                 ICU
+                              </span>
                            </div>
                            <Badge variant='outline'>85% Full</Badge>
                         </div>
-                        <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
+                        <div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg'>
                            <div className='flex items-center space-x-3'>
-                              <div className='w-3 h-3 bg-red-500 rounded-full'></div>
-                              <span className='text-sm font-medium'>
+                              <div className='w-3 h-3 bg-destructive rounded-full'></div>
+                              <span className='text-sm font-medium text-foreground'>
                                  Surgery Room 1
                               </span>
                            </div>
@@ -375,7 +488,7 @@ const Dashboard = () => {
             <Card className='border-0 shadow-lg'>
                <CardHeader className='pb-4'>
                   <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
-                     <CardTitle className='text-xl font-semibold text-gray-900'>
+                     <CardTitle className='text-xl font-semibold text-foreground'>
                         Recent Patient Admissions
                      </CardTitle>
                      <div className='flex items-center gap-2'>
@@ -389,85 +502,117 @@ const Dashboard = () => {
                   </div>
                </CardHeader>
                <CardContent>
-                  <div className='rounded-lg border border-gray-200 overflow-hidden'>
+                  <div className='rounded-lg border border-border overflow-hidden'>
                      <Table>
                         <TableHeader>
-                           <TableRow className='bg-gray-50'>
-                              <TableHead className='font-semibold text-gray-900'>
+                           <TableRow className='bg-muted/30'>
+                              <TableHead className='font-semibold text-foreground'>
                                  Patient Name
                               </TableHead>
-                              <TableHead className='font-semibold text-gray-900'>
+                              <TableHead className='font-semibold text-foreground'>
                                  ID
                               </TableHead>
-                              <TableHead className='font-semibold text-gray-900'>
+                              <TableHead className='font-semibold text-foreground'>
                                  Gender
                               </TableHead>
-                              <TableHead className='font-semibold text-gray-900'>
+                              <TableHead className='font-semibold text-foreground'>
                                  Condition
                               </TableHead>
-                              <TableHead className='font-semibold text-gray-900'>
+                              <TableHead className='font-semibold text-foreground'>
                                  Assigned Doctor
                               </TableHead>
-                              <TableHead className='font-semibold text-gray-900'>
+                              <TableHead className='font-semibold text-foreground'>
                                  Admission Date
                               </TableHead>
-                              <TableHead className='font-semibold text-gray-900'>
+                              <TableHead className='font-semibold text-foreground'>
                                  Status
                               </TableHead>
                            </TableRow>
                         </TableHeader>
                         <TableBody>
-                           {patientSampleData.map((patient, i) => (
-                              <TableRow
-                                 key={i}
-                                 className='hover:bg-gray-50 transition-colors'
-                              >
-                                 <TableCell className='font-medium text-gray-900'>
-                                    <div className='flex items-center space-x-3'>
-                                       <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
-                                          <span className='text-sm font-medium text-blue-600'>
-                                             {patient.name
-                                                .split(" ")
-                                                .map((n) => n[0])
-                                                .join("")}
-                                          </span>
+                           {displayAppointments.map((appointment, i) => {
+                              // Handle both real appointments and sample data structures
+                              const patientName = appointment.patients
+                                 ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
+                                 : appointment.name;
+                              const providerName =
+                                 appointment.providers?.name ||
+                                 appointment.doctor;
+                              const appointmentDate =
+                                 appointment.appointment_date ||
+                                 appointment.date;
+                              const appointmentStatus = appointment.status;
+
+                              return (
+                                 <TableRow
+                                    key={appointment.id || i}
+                                    className='hover:bg-muted/30 transition-colors'
+                                 >
+                                    <TableCell className='font-medium text-foreground'>
+                                       <div className='flex items-center space-x-3'>
+                                          <div className='w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center'>
+                                             <span className='text-sm font-medium text-primary-600'>
+                                                {patientName
+                                                   .split(" ")
+                                                   .map((n) => n[0])
+                                                   .join("")}
+                                             </span>
+                                          </div>
+                                          <span>{patientName}</span>
                                        </div>
-                                       <span>{patient.name}</span>
-                                    </div>
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    #{patient.serial}
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    {patient.gender}
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    {patient.disease}
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    {patient.doctor}
-                                 </TableCell>
-                                 <TableCell className='text-gray-600'>
-                                    {patient.date}
-                                 </TableCell>
-                                 <TableCell>
-                                    <Badge
-                                       variant={
-                                          patient.status === "Critical"
-                                             ? "destructive"
-                                             : "secondary"
-                                       }
-                                       className={`${
-                                          patient.status === "Critical"
-                                             ? "bg-red-100 text-red-700 hover:bg-red-200"
-                                             : "bg-green-100 text-green-700 hover:bg-green-200"
-                                       }`}
-                                    >
-                                       {patient.status}
-                                    </Badge>
-                                 </TableCell>
-                              </TableRow>
-                           ))}
+                                    </TableCell>
+                                    <TableCell className='text-muted-foreground'>
+                                       #
+                                       {appointment.appointment_id ||
+                                          appointment.serial}
+                                    </TableCell>
+                                    <TableCell className='text-muted-foreground'>
+                                       {appointment.appointment_type ||
+                                          appointment.gender ||
+                                          "General"}
+                                    </TableCell>
+                                    <TableCell className='text-muted-foreground'>
+                                       {appointment.chief_complaint ||
+                                          appointment.disease ||
+                                          "N/A"}
+                                    </TableCell>
+                                    <TableCell className='text-muted-foreground'>
+                                       {providerName}
+                                    </TableCell>
+                                    <TableCell className='text-muted-foreground'>
+                                       {new Date(
+                                          appointmentDate
+                                       ).toLocaleDateString()}
+                                    </TableCell>
+                                    <TableCell>
+                                       <Badge
+                                          variant={
+                                             appointmentStatus ===
+                                                "Cancelled" ||
+                                             appointmentStatus === "Critical"
+                                                ? "destructive"
+                                                : appointmentStatus ===
+                                                  "Completed"
+                                                ? "default"
+                                                : "secondary"
+                                          }
+                                          className={`${
+                                             appointmentStatus ===
+                                                "Cancelled" ||
+                                             appointmentStatus === "Critical"
+                                                ? "bg-error-100 text-error-700 hover:bg-error-200"
+                                                : appointmentStatus ===
+                                                  "Completed"
+                                                ? "bg-success-100 text-success-700 hover:bg-success-200"
+                                                : "bg-secondary-100 text-secondary-700 hover:bg-secondary-200"
+                                          }`}
+                                       >
+                                          {appointmentStatus}
+                                       </Badge>
+                                    </TableCell>
+                                 </TableRow>
+                              );
+                           })}
                         </TableBody>
                      </Table>
                   </div>
