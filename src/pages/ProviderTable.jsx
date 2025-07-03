@@ -111,13 +111,25 @@ const ProviderTable = () => {
       }
    };
 
-   // Enhanced config with real-time operations
+   // Enhanced config with real-time operations using Supabase
    const enhancedConfig = {
       ...config,
-      onAdd: handleAdd,
-      onEdit: handleEdit,
       onDelete: handleDelete,
       loading,
+      dataSource: "providers", // Connect to Supabase providers table
+      refreshData: () => {
+         setLoading(true);
+         masterDataService
+            .getProviders()
+            .then(({ data: providers }) => {
+               console.log("Refreshed providers:", providers);
+               setData(providers || []);
+            })
+            .catch((error) =>
+               console.error("Error refreshing providers:", error)
+            )
+            .finally(() => setLoading(false));
+      },
    };
 
    return <GenericTable {...enhancedConfig} data={data} />;

@@ -187,13 +187,31 @@ const ModifierTable = () => {
       }
    };
 
-   // Enhanced config with real-time operations
+   // Enhanced config with real-time operations using Supabase
    const enhancedConfig = {
       ...config,
-      onAdd: handleAdd,
-      onEdit: handleEdit,
       onDelete: handleDelete,
       loading,
+      dataSource: "modifiers", // Connect to Supabase modifiers table
+      refreshData: () => {
+         setLoading(true);
+         masterDataService
+            .getModifiers()
+            .then(({ data: modifiers }) => {
+               console.log("Refreshed modifiers:", modifiers);
+               const normalizedData = normalizeModifierData(modifiers || []);
+               setData(normalizedData);
+            })
+            .catch((error) => {
+               console.error("Error refreshing modifiers:", error);
+               // Use fallback data on error
+               const staticData = normalizeModifierData(
+                  fallbackData.modifier || []
+               );
+               setData(staticData);
+            })
+            .finally(() => setLoading(false));
+      },
    };
 
    console.log("ModifierTable rendering with data:", data);

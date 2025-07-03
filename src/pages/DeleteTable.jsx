@@ -160,6 +160,8 @@ const DeleteTable = () => {
          showEditButton={false}
          deleteButtonText='Delete Permanently'
          deleteButtonVariant='destructive'
+         dataSource='deleted_visits' // For consistency with other tables
+         refreshData={fetchDeleteData} // Allow manual refresh
       />
    );
 };
