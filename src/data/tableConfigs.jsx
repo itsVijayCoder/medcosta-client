@@ -7,6 +7,7 @@ import {
    FaClipboardList,
 } from "react-icons/fa";
 import { Trash2 } from "lucide-react";
+import { masterDataService } from "@/services/masterDataService";
 
 // Common form field options
 export const yesNoOptions = [
@@ -44,6 +45,24 @@ export const statusOptions = [
    { value: "Inactive", label: "Inactive" },
    { value: "Pending", label: "Pending" },
 ];
+
+// Dynamic options loaders
+export const getLocationOptions = async () => {
+   try {
+      const { data: locations, error } = await masterDataService.getLocations();
+      if (error) {
+         console.error("Error fetching locations:", error);
+         return [];
+      }
+      return locations.map((location) => ({
+         value: location.id,
+         label: location.location_name,
+      }));
+   } catch (error) {
+      console.error("Error loading location options:", error);
+      return [];
+   }
+};
 
 // Table configurations
 export const tableConfigs = {
@@ -125,7 +144,13 @@ export const tableConfigs = {
       ],
       formFields: [
          { key: "name", label: "Provider Name", type: "text" },
-         { key: "location_id", label: "Location ID", type: "text" },
+         {
+            key: "location_id",
+            label: "Location",
+            type: "select",
+            loadOptions: getLocationOptions,
+            placeholder: "Select a location...",
+         },
          { key: "address", label: "Address", type: "text", fullWidth: true },
          { key: "city", label: "City", type: "text" },
          {

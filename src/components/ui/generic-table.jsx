@@ -50,6 +50,7 @@ const GenericTable = ({
       loading: false,
       error: null,
    });
+   const [dynamicOptions, setDynamicOptions] = useState({});
 
    // Update data when initialData prop changes
    useEffect(() => {
@@ -63,6 +64,32 @@ const GenericTable = ({
          onSelectedRowsChange(selectedRows);
       }
    }, [selectedRows, onSelectedRowsChange]);
+
+   // Load dynamic options for select fields
+   useEffect(() => {
+      const loadDynamicOptions = async () => {
+         const fieldsWithLoaders =
+            formFields?.filter((field) => field.loadOptions) || [];
+
+         for (const field of fieldsWithLoaders) {
+            try {
+               const options = await field.loadOptions();
+               setDynamicOptions((prev) => ({
+                  ...prev,
+                  [field.key]: options,
+               }));
+            } catch (error) {
+               console.error(`Error loading options for ${field.key}:`, error);
+               setDynamicOptions((prev) => ({
+                  ...prev,
+                  [field.key]: [],
+               }));
+            }
+         }
+      };
+
+      loadDynamicOptions();
+   }, [formFields]);
 
    // Create initial form state from form fields
    const createInitialFormState = () => {
@@ -501,10 +528,14 @@ const GenericTable = ({
    };
 
    const renderFormField = (field) => {
-      const { key, label, type, options, placeholder, className } = field;
+      const { key, label, type, options, loadOptions, placeholder, className } =
+         field;
 
       switch (type) {
          case "select":
+            // Use dynamic options if available, otherwise fall back to static options
+            const selectOptions = dynamicOptions[key] || options || [];
+
             return (
                <Select
                   value={newRecord[key]}
@@ -527,7 +558,7 @@ const GenericTable = ({
                      />
                   </SelectTrigger>
                   <SelectContent>
-                     {options.map((option) => (
+                     {selectOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                            {option.label}
                         </SelectItem>

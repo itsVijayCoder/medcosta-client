@@ -316,6 +316,22 @@ export const masterDataService = {
             return { data: null, error: "Provider name is required" };
          }
 
+         // Validate location_id if provided (should be a UUID)
+         if (providerData.location_id) {
+            const uuidRegex =
+               /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(providerData.location_id)) {
+               console.error(
+                  "Invalid location_id format:",
+                  providerData.location_id
+               );
+               return {
+                  data: null,
+                  error: "Invalid location selected. Please select a valid location.",
+               };
+            }
+         }
+
          // Ensure is_active is set to true for new records
          const dataToInsert = { ...providerData, is_active: true };
 
