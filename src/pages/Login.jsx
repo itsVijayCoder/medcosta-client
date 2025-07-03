@@ -12,11 +12,13 @@ import {
    CardFooter,
 } from "@/components/ui/card";
 import { AuthContext } from "@/App";
-import logo from "@/assets/medcosta-login.jpg";
+import { authService } from "@/services/authService";
+import logo from "@/assets/WorknoFault.png";
+
 
 export default function Login() {
    const [formData, setFormData] = useState({
-      username: "",
+      email: "",
       password: "",
    });
 
@@ -43,27 +45,20 @@ export default function Login() {
       setError("");
 
       try {
-         // TODO: Replace with actual API authentication
-         console.log("Logging in with:", formData);
+         const { data, error: authError } = await authService.signIn(
+            formData.email,
+            formData.password
+         );
 
-         // Simulate API call delay
-         await new Promise((resolve) => setTimeout(resolve, 1000));
-
-         // For demo purposes
-         if (formData.username && formData.password) {
-            // Generate a mock token - in a real app, this would come from your backend
-            // Using a proper format for the token that our system can parse
-            const mockToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IiR7Zm9ybURhdGEudXNlcm5hbWV9IiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzkwMjJ9.${Date.now()}`;
-            // Use the login function from AuthContext
-            login(mockToken);
-
-            // Redirect to the original path the user was trying to access (or dashboard if direct login)
-            navigate(from, { replace: true });
-         } else {
-            throw new Error("Please enter both username and password");
+         if (authError) {
+            setError(authError);
+            return;
          }
+
+         // Redirect to the original path the user was trying to access (or dashboard if direct login)
+         navigate(from, { replace: true });
       } catch (err) {
-         setError(err.message || "Invalid username or password");
+         setError(err.message || "An error occurred during login");
          console.error("Login error:", err);
       } finally {
          setIsLoading(false);
@@ -71,115 +66,148 @@ export default function Login() {
    };
 
    return (
-      <div className='min-h-screen flex w-full bg-gradient-to-br from-background to-secondary/10'>
-         {/* Left column with image - full background */}
-         <div className='hidden lg:flex w-1/2 relative overflow-hidden'>
-            {/* Background image covering the entire left side */}
-            <div className='absolute inset-0 z-0'>
-               <img
-                  src={logo}
-                  alt='MedCosta Login'
-                  className='w-full h-full object-cover'
-               />
-               {/* Overlay to ensure text remains visible */}
-               {/* <div className='absolute inset-0 bg-gradient-to-r from-primary/30 to-primary/30'></div> */}
-            </div>
+      <div className='min-h-screen flex flex-col bg-primary-gradient'>
+         {/* Glassmorphism container */}
+         <div className='flex flex-grow items-center justify-center p-4'>
+            <div className='w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-5 overflow-hidden rounded-3xl shadow-2xl backdrop-blur-md'>
+               {/* Left side - Brand */}
+               <div className='lg:col-span-2 relative overflow-hidden bg-primary-gradient p-8 flex flex-col justify-between'>
+                  {/* Decorative elements */}
+                  <div className='absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2'></div>
+                  <div className='absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2'></div>
 
-            {/* Content positioned on top of the background */}
-            <div className='relative z-10 w-full h-full flex items-start justify-center p-10'>
-               <div className='relative w-full max-w-lg'>
-                  {/* Background decorative elements */}
-                  <div className='absolute top-0 -left-4 w-72 h-72 bg-primary/5 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob'></div>
-                  <div className='absolute top-0 -right-4 w-72 h-72 bg-secondary/5 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000'></div>
-                  <div className='absolute -bottom-8 left-20 w-72 h-72 bg-accent/5 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000'></div>
-
-                  {/* Text content */}
-                  <div className='relative mb-32 backdrop-blur-md bg-black/0 p-8 rounded-lg shadow-lg'>
-                     <h2 className='text-4xl font-bold text-primary mb-2'>
-                        WorkNoFault
+                  {/* Content */}
+                  <div className='z-10'>
+                     <div className='flex items-center space-x-3 mb-12'>
+                        <img
+                           src={logo}
+                           alt='WorkNoFault'
+                           className='h-14 w-auto '
+                        />
+                     </div>
+                     <h2 className='text-3xl md:text-4xl font-bold text-primary mb-4'>
+                        Welcome back to the Healthcare Management System
                      </h2>
-                     <p className='text-xl text-white/80'>
-                        Healthcare Management System
+                     <p className='text-primary-100 text-lg max-w-sm'>
+                        Securely access your dashboard and manage your
+                        healthcare services efficiently.      
+                     </p>
+                  </div>
+
+                  {/* Bottom text */}
+                  <div className='z-10 mt-auto'>
+                     <p className='text-sm text-primary-100 opacity-80'>
+                        © {new Date().getFullYear()} MedCosta Healthcare. All
+                        rights reserved.
                      </p>
                   </div>
                </div>
-            </div>
-         </div>
 
-         {/* Right column with login form */}
-         <div className='w-full lg:w-1/2 flex flex-col items-center justify-center p-8'>
-            <div className='w-full max-w-md'>
-               <div className='mb-8 lg:hidden text-center'>
-                  <img
-                     src={logo}
-                     alt='MedCosta'
-                     className='h-16 mx-auto mb-4 rounded-lg shadow-md'
-                  />
-                  <h2 className='text-2xl font-bold text-primary'>MedCosta</h2>
-                  <p className='text-sm text-muted-foreground'>
-                     Healthcare Management System
-                  </p>
-               </div>
+               {/* Right side - Login form */}
+               <div className='lg:col-span-3 bg-background p-8 md:p-12'>
+                  <div className='w-full max-w-md mx-auto'>
+                     <div className='mb-8'>
+                        <h3 className='text-2xl font-bold text-foreground'>
+                           Sign in
+                        </h3>
+                        <p className='text-muted-foreground mt-2'>
+                           Please enter your credentials to continue
+                        </p>
+                     </div>
 
-               <Card className='w-full backdrop-blur-sm bg-white/95 shadow-xl border-0 rounded-xl overflow-hidden'>
-                  <CardHeader className='space-y-1'>
-                     <CardTitle className='text-2xl font-bold text-center'>
-                        Sign in
-                     </CardTitle>
-                     <CardDescription className='text-center'>
-                        Enter your credentials to access your account
-                     </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                     <form onSubmit={handleSubmit} className='space-y-4'>
+                     <form onSubmit={handleSubmit} className='space-y-5'>
                         <div className='space-y-2'>
-                           <Label htmlFor='username'>Username</Label>
-                           <Input
-                              id='username'
-                              name='username'
-                              placeholder='Enter your username'
-                              type='text'
-                              value={formData.username}
-                              onChange={handleInputChange}
-                              required
-                           />
-                        </div>
-                        <div className='space-y-2'>
-                           <Label htmlFor='password'>Password</Label>
-                           <Input
-                              id='password'
-                              name='password'
-                              placeholder='Enter your password'
-                              type='password'
-                              value={formData.password}
-                              onChange={handleInputChange}
-                              required
-                           />
-                        </div>
-                        <div className='flex items-center justify-between'>
-                           <div className='flex items-center space-x-2'>
-                              <input
-                                 type='checkbox'
-                                 id='remember'
-                                 className='rounded border-gray-300 text-primary focus:ring-primary'
+                           <Label htmlFor='email' className='text-foreground'>
+                              Email
+                           </Label>
+                           <div className='relative'>
+                              <Input
+                                 id='email'
+                                 name='email'
+                                 placeholder='Enter your email'
+                                 type='email'
+                                 value={formData.email}
+                                 onChange={handleInputChange}
+                                 required
+                                 className='pl-10 py-2'
                               />
-                              <Label
-                                 htmlFor='remember'
-                                 className='text-sm cursor-pointer'
-                              >
-                                 Remember me
-                              </Label>
+                              <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                                 <svg
+                                    xmlns='http://www.w3.org/2000/svg'
+                                    className='h-5 w-5 text-muted-foreground'
+                                    viewBox='0 0 20 20'
+                                    fill='currentColor'
+                                 >
+                                    <path
+                                       fillRule='evenodd'
+                                       d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
+                                       clipRule='evenodd'
+                                    />
+                                 </svg>
+                              </div>
                            </div>
-                           <a
-                              href='#'
-                              className='text-sm font-medium text-primary hover:text-primary/80'
-                           >
-                              Forgot password?
-                           </a>
                         </div>
+
+                        <div className='space-y-2'>
+                           <div className='flex items-center justify-between'>
+                              <Label
+                                 htmlFor='password'
+                                 className='text-foreground'
+                              >
+                                 Password
+                              </Label>
+                              <a
+                                 href='#'
+                                 className='text-sm font-medium text-primary hover:text-primary/90'
+                              >
+                                 Forgot password?
+                              </a>
+                           </div>
+                           <div className='relative'>
+                              <Input
+                                 id='password'
+                                 name='password'
+                                 placeholder='••••••••'
+                                 type='password'
+                                 value={formData.password}
+                                 onChange={handleInputChange}
+                                 required
+                                 className='pl-10 py-2'
+                              />
+                              <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                                 <svg
+                                    xmlns='http://www.w3.org/2000/svg'
+                                    className='h-5 w-5 text-muted-foreground'
+                                    viewBox='0 0 20 20'
+                                    fill='currentColor'
+                                 >
+                                    <path
+                                       fillRule='evenodd'
+                                       d='M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z'
+                                       clipRule='evenodd'
+                                    />
+                                 </svg>
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className='flex items-center'>
+                           <input
+                              type='checkbox'
+                              id='remember'
+                              className='h-4 w-4 rounded border-border text-primary focus:ring-primary '
+                           />
+                           <Label
+                              htmlFor='remember'
+                              className='ml-2 block text-sm text-foreground'
+                           >
+                              Keep me signed in
+                           </Label>
+                        </div>
+
                         {error && (
-                           <div className='p-3 rounded-md bg-red-50 dark:bg-red-900/30 mt-2'>
-                              <p className='text-sm font-medium text-red-800 dark:text-red-200'>
+                           <div className='p-3 rounded-md bg-destructive/10'>
+                              <p className='text-sm font-medium text-destructive'>
                                  <span className='inline-flex mr-1'>
                                     <svg
                                        xmlns='http://www.w3.org/2000/svg'
@@ -198,9 +226,10 @@ export default function Login() {
                               </p>
                            </div>
                         )}
+
                         <Button
                            type='submit'
-                           className='w-full py-2.5 bg-primary text-white font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:scale-[1.02] focus:ring-4 focus:ring-blue-500/50'
+                           className='w-full py-2.5 bg-primary text-primary-foreground font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:scale-[1.02] focus:ring-4 focus:ring-primary/50'
                            disabled={isLoading}
                         >
                            {isLoading ? (
@@ -228,17 +257,24 @@ export default function Login() {
                                  Signing in...
                               </span>
                            ) : (
-                              "Sign in"
+                              "Sign in to your account"
                            )}
                         </Button>
+
+                        <div className='text-center pt-3'>
+                           <p className='text-sm text-muted-foreground'>
+                              Need an account?{" "}
+                              <a
+                                 href='#'
+                                 className='font-medium text-primary hover:text-primary/90'
+                              >
+                                 Contact administrator
+                              </a>
+                           </p>
+                        </div>
                      </form>
-                  </CardContent>
-                  <CardFooter className='flex justify-center'>
-                     <p className='text-sm text-muted-foreground'>
-                        Don't have an account? Contact your administrator
-                     </p>
-                  </CardFooter>
-               </Card>
+                  </div>
+               </div>
             </div>
          </div>
       </div>

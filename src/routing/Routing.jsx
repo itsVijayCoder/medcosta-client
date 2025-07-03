@@ -1,18 +1,33 @@
 import Layout from "@/components/Layout";
-import Dashboard from "@/pages/Dashboard";
-import DeleteTable from "@/pages/DeleteTable";
-import DiagnosisTable from "@/pages/DiagnosisTable";
-import InsuranceTable from "@/pages/InsuranceTable";
-import LocationTable from "@/pages/LocationTable";
-import Login from "@/pages/Login";
-import ModifierTable from "@/pages/ModifierTable";
-import NewAppointment from "@/pages/NewAppointment";
-import PatientRegistration from "@/pages/PatientRegistration";
-import ProcedureTable from "@/pages/ProcedureTable";
-import ProviderTable from "@/pages/ProviderTable";
-import React, { useContext } from "react";
+import React, { useContext, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "@/App";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
+// Create a simpler lazy loading wrapper
+const lazyLoad = (importFn) => {
+   const LazyComponent = lazy(importFn);
+   return (props) => (
+      <Suspense fallback={<LoadingSpinner />}>
+         <LazyComponent {...props} />
+      </Suspense>
+   );
+};
+
+// Lazy load components for code splitting with relative paths
+const Dashboard = lazyLoad(() => import("../pages/Dashboard"));
+const DeleteTable = lazyLoad(() => import("../pages/DeleteTable"));
+const DiagnosisTable = lazyLoad(() => import("../pages/DiagnosisTable"));
+const InsuranceTable = lazyLoad(() => import("../pages/InsuranceTable"));
+const LocationTable = lazyLoad(() => import("../pages/LocationTable"));
+const Login = lazyLoad(() => import("../pages/Login"));
+const ModifierTable = lazyLoad(() => import("../pages/ModifierTable"));
+const NewAppointment = lazyLoad(() => import("../pages/NewAppointment"));
+const PatientRegistration = lazyLoad(() =>
+   import("../pages/PatientRegistration")
+);
+const ProcedureTable = lazyLoad(() => import("../pages/ProcedureTable"));
+const ProviderTable = lazyLoad(() => import("../pages/ProviderTable"));
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {

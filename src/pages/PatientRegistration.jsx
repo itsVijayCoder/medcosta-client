@@ -1,359 +1,225 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { MultiStepForm } from "@/components/ui/multi-step-form";
 import { Button } from "@/components/ui/button";
-import {
-  CustomSelect,
+import { User, FileText, Shield, Building2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { patientService } from "@/services/patientService";
 
-} from "@/components/ui/custom-select";
-// import { Separator } from "@/components/ui/separator";
-// Add import
-import { DatePicker } from "@/components/ui/date-picker";
+// Create a custom lazy loading wrapper for form step components
+const createLazyComponent = (importFn, exportName) => {
+   const LazyComponent = lazy(() =>
+      importFn().then((module) => ({ default: module[exportName] }))
+   );
+
+   return (props) => (
+      <Suspense fallback={<LoadingSpinner />}>
+         <LazyComponent {...props} />
+      </Suspense>
+   );
+};
+
+// Lazily load form step components with direct import functions
+const PersonalInfoStep = createLazyComponent(
+   () => import("../components/form-steps/PersonalInfoStep"),
+   "PersonalInfoStep"
+);
+const AccidentInfoStep = createLazyComponent(
+   () => import("../components/form-steps/AccidentInfoStep"),
+   "AccidentInfoStep"
+);
+const InsuranceInfoStep = createLazyComponent(
+   () => import("../components/form-steps/InsuranceInfoStep"),
+   "InsuranceInfoStep"
+);
+const EmployerAdjusterStep = createLazyComponent(
+   () => import("../components/form-steps/EmployerAdjusterStep"),
+   "EmployerAdjusterStep"
+);
 
 const PatientRegistration = () => {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    dob: "",
-    city: "",
-    ssn: "",
-    address: "",
-    home_phone: "",
-    case_type: "",
-    date_filed: "",
-    state_filed: "",
-    insurance_name: "",
-    claim: "",
-    policy_number: "",
-    employer_name: "",
-    employer_city: "",
-    employer_address: "",
-    adjuster_name: "",
-    relation_name: "",
-    relation_address: "",
-    relation_phone: "",
-    relation_type: "",
-  });
+   const navigate = useNavigate();
+   const [enableAnimations, setEnableAnimations] = useState(false);
+   const [formData, setFormData] = useState({
+      // Personal Information
+      first_name: "",
+      last_name: "",
+      dob: "",
+      ssn: "",
+      gender: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      home_phone: "",
+      mobile_phone: "",
+      email: "",
+      emergency_contact_name: "",
+      emergency_contact_phone: "",
+      emergency_contact_relationship: "",
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+      // Case Information
+      case_type: "",
+      date_filed: "",
+      state_filed: "",
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("http://localhost/medcosta/index.php/save_patient", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      // Insurance Information
+      insurance_name: "",
+      policy_number: "",
+      group_number: "",
+      subscriber_name: "",
+      subscriber_dob: "",
+      relationship: "",
+      effective_date: "",
+      termination_date: "",
+      copay_amount: "",
+      deductible_amount: "",
 
-      const data = await response.json();
-      if (data.success) {
-        alert("Patient registered successfully!");
-        navigate("/dataentry/patient-entry");
-      } else {
-        alert("Failed to register patient.");
+      // Employer Information
+      employer_name: "",
+      employer_address: "",
+      employer_city: "",
+      employer_state: "",
+      employer_zip: "",
+      employer_phone: "",
+      adjuster_name: "",
+      adjuster_phone: "",
+      adjuster_email: "",
+      claim_number: "",
+      date_of_injury: "",
+   });
+
+   const steps = [
+      {
+         id: "personal",
+         title: "Personal Information",
+         description: "Basic patient details",
+         icon: User,
+         component: PersonalInfoStep,
+      },
+      {
+         id: "accident",
+         title: "Accident & Case Info",
+         description: "Case and accident details",
+         icon: FileText,
+         component: AccidentInfoStep,
+      },
+      {
+         id: "insurance",
+         title: "Insurance Information",
+         description: "Insurance coverage details",
+         icon: Shield,
+         component: InsuranceInfoStep,
+      },
+      {
+         id: "employer",
+         title: "Employer & Adjuster",
+         description: "Work and adjuster information",
+         icon: Building2,
+         component: EmployerAdjusterStep,
+      },
+   ];
+
+   const handleStepDataChange = (stepData) => {
+      setFormData((prev) => ({ ...prev, ...stepData }));
+   };
+
+   const handleSubmit = async (finalData) => {
+      try {
+         console.log("Form data being submitted:", finalData);
+
+         // Use Supabase service to create patient with all related data
+         const { data, error } = await patientService.createPatient(finalData);
+
+         if (error) {
+            console.error("Patient creation error:", error);
+            alert(`Error: ${error}`);
+            return;
+         }
+
+         console.log("Patient created successfully:", data);
+         alert("Patient registered successfully!");
+         navigate("/dataentry/patient-entry");
+      } catch (error) {
+         console.error("Error submitting form:", error);
+         alert("Error occurred during registration.");
       }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Error occurred during registration.");
-    }
-  };
+   };
 
-  return (
-    <div className="container mx-auto p-6">
-      <div className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Patient Registration</h2>
-          {/* <p className="text-muted-foreground">Please fill in the patient information carefully</p> */}
-        </div>
+   const testPermissions = async () => {
+      try {
+         console.log("=== TESTING PERMISSIONS FROM UI ===");
+         const result = await patientService.testPermissions();
+         console.log("Permission test result:", result);
+         alert(
+            `Permission Test Result: ${
+               result.hasPermission ? "PASS" : "FAIL"
+            }\n\nDetails:\n${JSON.stringify(result, null, 2)}`
+         );
+      } catch (error) {
+         console.error("Permission test error:", error);
+         alert(`Permission Test Error: ${error.message}`);
+      }
+   };
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name</Label>
-                  <Input
-                    id="first_name"
-                    name="first_name"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name</Label>
-                  <Input
-                    id="last_name"
-                    name="last_name"
-                    value={formData.last_name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-           
-                <div className="space-y-2">
-                  <Label htmlFor="dob">Date of Birth</Label>
-                  <DatePicker
-                    name="dob"
-                    value={formData.dob}
-                    onChange={handleChange}
-                  />
-                </div>
-                
-            
-                {/* <div className="space-y-2">
-                  <Label htmlFor="date_filed">Date Filed</Label>
-                  <DatePicker
-                    name="date_filed"
-                    value={formData.date_filed}
-                    onChange={handleChange}
-                  />
-                </div> */}
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="ssn">SSN#</Label>
-                  <Input
-                    id="ssn"
-                    name="ssn"
-                    value={formData.ssn}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="home_phone">Home Phone</Label>
-                  <Input
-                    id="home_phone"
-                    name="home_phone"
-                    value={formData.home_phone}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <CustomSelect
-                    label="Case Type"
-                    value={formData.case_type}
-                    onChange={(value) => handleChange({ target: { name: 'case_type', value }})}
-                    items={[
-                      { value: 'Dropped Cases', label: 'Dropped Cases' },
-                      { value: 'Litigation', label: 'Litigation' },
-                      { value: 'NoFault', label: 'NoFault' },
-                      { value: 'Paid In Full', label: 'Paid In Full' },
-                      { value: 'Lein', label: 'Lein' },
-                      { value: 'Private', label: 'Private' },
-                      { value: 'Stopped Cases', label: 'Stopped Cases' },
-                      { value: 'Workers Compensation', label: 'Workers Compensation' },
-                    ]}
-                    placeholder="Select case type"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-{/* 
-          <Card>
-            <CardHeader>
-              <CardTitle>Case Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <CustomSelect
-                    label="Case Type"
-                    value={formData.case_type}
-                    onChange={(value) => handleChange({ target: { name: 'case_type', value }})}
-                    items={[
-                      { value: 'type1', label: 'Type 1' },
-                      { value: 'type2', label: 'Type 2' },
-                    ]}
-                    placeholder="Select case type"
-                  />
-                </div>
-
-           
-              </div>
-            </CardContent>
-          </Card> */}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Accident & Insurance Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Accident Information */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold">Accident Information</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="date_filed">Date Filed</Label>
-                    <DatePicker
-                    name="dob"
-                    value={formData.dob}
-                    onChange={handleChange}
-                  />
-                  </div>
-                  <div className="space-y-2">
-                    <CustomSelect
-                      label="State Filed"
-                      value={formData.state_filed}
-                      onChange={(value) => handleChange({ target: { name: 'state_filed', value }})}
-                      items={[
-                        { value: 'Texas', label: 'Texas' },
-                        { value: 'California', label: 'California' },
-                        { value: 'Florida', label: 'Florida' },
-                        { value: 'New York', label: 'New York' },
-                        { value: 'Illinois', label: 'Illinois' },
-                      ]}
-                      placeholder="Select state"
-                    />
-                  </div>
-                </div>
-
-                {/* Insurance Information */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold">Insurance Information</h3>
-                  <div className="space-y-2">
-                    <CustomSelect
-                      label="Insurance Name"
-                      value={formData.insurance_name}
-                      onChange={(value) => handleChange({ target: { name: 'insurance_name', value }})}
-                      items={[
-                        { value: 'UnitedHealth Group', label: 'UnitedHealth Group' },
-                        { value: 'Blue Cross Blue Shield', label: 'Blue Cross Blue Shield' },
-                        { value: 'Aetna', label: 'Aetna' },
-                        { value: 'Cigna', label: 'Cigna' },
-                        { value: 'Humana', label: 'Humana' },
-                      ]}
-                      placeholder="Select insurance"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="claim">Claim</Label>
-                    <Input
-                      id="claim"
-                      name="claim"
-                      value={formData.claim}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="policy_number">Policy Number</Label>
-                    <Input
-                      id="policy_number"
-                      name="policy_number"
-                      value={formData.policy_number}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Employer & Adjuster Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Employer Information */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold">Employer Information</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="employer_name">Employer Name</Label>
-                    <Input
-                      id="employer_name"
-                      name="employer_name"
-                      value={formData.employer_name}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="employer_city">City</Label>
-                    <Input
-                      id="employer_city"
-                      name="employer_city"
-                      value={formData.employer_city}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="employer_address">Address</Label>
-                    <Input
-                      id="employer_address"
-                      name="employer_address"
-                      value={formData.employer_address}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-
-                {/* Adjuster Information */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold">Adjuster Information</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="adjuster_name">Name</Label>
-                    <Input
-                      id="adjuster_name"
-                      name="adjuster_name"
-                      value={formData.adjuster_name}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" onClick={() => navigate(-1)}>
-              Cancel
+   return (
+      <div className='min-h-screen bg-primary-gradient p-4 sm:p-6 relative overflow-hidden'>
+         {/* Animation Toggle Button */}
+         {/* <div className='fixed top-20 right-4 z-50 space-y-2'>
+            <Button
+               onClick={() => setEnableAnimations(!enableAnimations)}
+               variant={enableAnimations ? "default" : "outline"}
+               className={`
+                  px-4 py-2 text-sm font-semibold rounded-lg shadow-lg transition-all duration-300
+                  ${
+                     enableAnimations
+                        ? "bg-primary/10 text-primary-foreground hover:bg-primary/20"
+                        : "bg-background hover:bg-muted text-foreground border-2 border-border"
+                  }
+               `}
+            >
+               {enableAnimations ? "🎬 Animations ON" : "🎭 Animations OFF"}
             </Button>
-            <Button type="submit">Submit Registration</Button>
-          </div>
-        </form>
+
+            <Button
+               onClick={testPermissions}
+               variant='outline'
+               className='block w-full px-4 py-2 text-sm font-semibold rounded-lg shadow-lg bg-warning-soft hover:bg-warning-soft/80 text-warning-strong border-2 border-warning'
+            >
+               🔐 Test Permissions
+            </Button>
+         </div> */}
+
+         {/* Enhanced Background Pattern */}
+         <div className='absolute inset-0 opacity-30'>
+            <div className='absolute top-20 left-10 w-72 h-72 bg-primary/40 rounded-full mix-blend-multiply filter blur-xl animate-blob' />
+            <div className='absolute top-40 right-10 w-72 h-72 bg-secondary/40 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000' />
+            <div className='absolute bottom-20 left-20 w-72 h-72 bg-accent/40 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000' />
+         </div>
+
+         <div className='max-w-5xl mx-auto relative z-10'>
+            <div className='text-center mb-8 sm:mb-12'>
+               {/* <h1 className='text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground via-primary to-primary/80 bg-clip-text text-transparent mb-3 sm:mb-4 pb-2'>
+                  Patient Registration
+               </h1> */}
+               {/* <p className='text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto'>
+                  Complete the patient registration process step by step with
+                  our modern, intuitive interface
+               </p> */}
+            </div>{" "}
+            <MultiStepForm
+               steps={steps}
+               initialData={formData}
+               onStepDataChange={handleStepDataChange}
+               onSubmit={handleSubmit}
+               onCancel={() => navigate(-1)}
+               submitButtonText='Complete Registration'
+               className='rounded-xl bg-card/50 backdrop-blur-sm'
+               enableAnimations={enableAnimations}
+            />
+         </div>
       </div>
-    </div>
-  );
+   );
 };
 
 export default PatientRegistration;
-      

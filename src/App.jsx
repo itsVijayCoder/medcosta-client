@@ -1,105 +1,113 @@
 import "./App.css";
 import { createContext, useState, useEffect } from "react";
 import Routing from "./routing/Routing";
+import { prefetchCommonRoutes } from "./utils/route-prefetch.js";
+import { supabase } from "./lib/supabaseClient";
 
 // Create AuthContext
 export const AuthContext = createContext();
 
 function App() {
-   // Initialize token from tokenData if it exists and is valid
-   const getInitialToken = () => {
-      const tokenDataStr = localStorage.getItem("tokenData");
-      if (tokenDataStr) {
-         try {
-            const tokenData = JSON.parse(tokenDataStr);
-            // Check if token is valid (not expired)
-            const expirationTime = 86400000; // 24 hours
-            const now = Date.now();
-            if (now - tokenData.timestamp < expirationTime) {
-               return tokenData.token;
-            }
-         } catch (error) {
-            console.error("Error parsing token data:", error);
+   const [user, setUser] = useState(null);
+   const [userProfile, setUserProfile] = useState(null);
+   const [loading, setLoading] = useState(true);
+   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+   // Fetch user profile data
+   const fetchUserProfile = async (userId) => {
+      if (!userId) return;
+
+      try {
+         const { data: profile, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", userId)
+            .single();
+
+         if (error) {
+            console.error("Error fetching user profile:", error);
+            return;
          }
+
+         setUserProfile(profile);
+         console.log("User profile loaded:", profile);
+      } catch (error) {
+         console.error("Error fetching profile:", error);
       }
-      return null;
    };
 
-   const [token, setToken] = useState(getInitialToken());
-   const [isAuthenticated, setIsAuthenticated] = useState(!!getInitialToken());
-
-   // Authentication functions
-   const login = (userToken) => {
-      // Store token with timestamp
-      const tokenData = {
-         token: userToken,
-         timestamp: Date.now(),
-      };
-      localStorage.setItem("tokenData", JSON.stringify(tokenData));
-      setToken(userToken);
-      setIsAuthenticated(true);
-   };
-
-   const logout = () => {
-      localStorage.removeItem("tokenData");
-      setToken(null);
-      setIsAuthenticated(false);
-   };
-
-   // Check if token is valid (not expired)
-   const isTokenValid = (tokenData) => {
-      if (!tokenData) return false;
-
-      // Token expires after 24 hours (86400000 ms)
-      const expirationTime = 86400000;
-      const now = Date.now();
-      return now - tokenData.timestamp < expirationTime;
-   };
-
-   // Check token on startup and periodically for expiration
    useEffect(() => {
-      // Define logout function for use inside this effect
-      const handleLogout = () => {
-         localStorage.removeItem("tokenData");
-         setToken(null);
-         setIsAuthenticated(false);
-      };
+      // Get initial session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+         setUser(session?.user ?? null);
+         setIsAuthenticated(!!session?.user);
 
-      const checkToken = () => {
-         const storedTokenData = localStorage.getItem("tokenData");
-         if (storedTokenData) {
-            try {
-               const parsedTokenData = JSON.parse(storedTokenData);
-
-               if (isTokenValid(parsedTokenData)) {
-                  setToken(parsedTokenData.token);
-                  setIsAuthenticated(true);
-               } else {
-                  // Token expired, clear it
-                  handleLogout();
-                  console.log("Session expired. Please login again.");
-               }
-            } catch (error) {
-               // Invalid token format, clear it
-               console.error("Invalid token format:", error);
-               handleLogout();
-            }
+         if (session?.user) {
+            fetchUserProfile(session.user.id);
          }
-      };
 
-      // Check on component mount
-      checkToken();
+         setLoading(false);
+      });
 
-      // And then check periodically (every 5 minutes)
-      const interval = setInterval(checkToken, 5 * 60 * 1000);
+      // Listen for auth changes
+      const {
+         data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+         setUser(session?.user ?? null);
+         setIsAuthenticated(!!session?.user);
 
-      // Cleanup interval on unmount
-      return () => clearInterval(interval);
+         if (session?.user) {
+            fetchUserProfile(session.user.id);
+         } else {
+            setUserProfile(null);
+         }
+
+         setLoading(false);
+      });
+
+      return () => subscription?.unsubscribe();
    }, []);
 
+   // Legacy authentication functions for backward compatibility
+   const login = (userToken) => {
+      // This is kept for backward compatibility but shouldn't be used
+      // Use supabase.auth.signIn instead
+      console.warn("Legacy login function called. Use Supabase auth instead.");
+   };
+
+   const logout = async () => {
+      await supabase.auth.signOut();
+   };
+
+   // Prefetch common routes when the user is authenticated
+   useEffect(() => {
+      if (isAuthenticated) {
+         prefetchCommonRoutes();
+      }
+   }, [isAuthenticated]);
+
+   if (loading) {
+      return (
+         <div className='flex items-center justify-center min-h-screen'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900'></div>
+         </div>
+      );
+   }
+
    return (
-      <AuthContext.Provider value={{ token, isAuthenticated, login, logout }}>
-         <Routing />
+      <AuthContext.Provider
+         value={{
+            user,
+            userProfile,
+            isAuthenticated,
+            loading,
+            login,
+            logout,
+         }}
+      >
+         <main className='bg-primary/20 min-h-screen text-foreground'>
+            <Routing />
+         </main>
       </AuthContext.Provider>
    );
 }

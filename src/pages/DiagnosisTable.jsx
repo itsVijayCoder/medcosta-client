@@ -1,142 +1,145 @@
-import React, { useState } from "react";
-import { DataTable } from "@/components/ui/data-table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FaPlus } from "react-icons/fa";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Modal } from "@/components/ui/modal";
+import React, { useState, useEffect } from "react";
+import GenericTable from "@/components/ui/generic-table";
+import { tableConfigs } from "@/data/tableConfigs";
+import { masterDataService } from "@/services/masterDataService";
+import { supabase } from "@/lib/supabaseClient";
+import { getTableDataWithFallback } from "@/lib/utils";
 
 const DiagnosisTable = () => {
-  const [data, setData] = useState([
-    {
-      id: 1,
-      diagnosis_code: "D001",
-      description: "Sample Diagnosis",
-      diagnosis_type: "Type A",
-      preferred_bit: "True",
-      type: "Primary"
-    }
-  ]);
+   const [data, setData] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const config = tableConfigs.diagnosis;
 
-  const [editId, setEditId] = useState(null);
-  const [editedData, setEditedData] = useState({
-    id: 0,
-    diagnosis_code: "",
-    description: "",
-    diagnosis_type: "",
-    preferred_bit: "",
-    type: "",
-  });
+   // Fetch real-time data from Supabase
+   useEffect(() => {
+      const fetchData = async () => {
+         try {
+            const { data: diagnosisCodes, error } =
+               await masterDataService.getDiagnosisCodes();
+            if (error) {
+               console.error("Error fetching diagnosis codes:", error);
+               setLoading(false);
+               return;
+            }
+            console.log("Diagnosis codes from API:", diagnosisCodes);
 
-  const [newDiagnosis, setNewDiagnosis] = useState({
-    diagnosis_code: "",
-    description: "",
-    diagnosis_type: "",
-    preferred_bit: "",
-    type: "",
-  });
+            // Correctly map the backend data if it matches the key structure in api-response.js
+            const formattedData =
+               diagnosisCodes && diagnosisCodes.length > 0
+                  ? diagnosisCodes
+                  : [];
 
-  const columns = [
-    { header: "Diagnosis Code", accessorKey: "diagnosis_code" },
-    { header: "Description", accessorKey: "description" },
-    { header: "Diagnosis Type", accessorKey: "diagnosis_type" },
-    { header: "Preferred Bit", accessorKey: "preferred_bit" },
-    { header: "Type", accessorKey: "type" },
-  ];
+            setData(formattedData);
+         } catch (error) {
+            console.error("Error:", error);
+         } finally {
+            setLoading(false);
+         }
+      };
 
-  const handleEdit = (id, row) => {
-    setEditId(id);
-    setEditedData({ ...row });
-  };
+      fetchData();
 
-  const handleInputChange = (e, field) => {
-    setEditedData({ ...editedData, [field]: e.target.value });
-  };
+      // Set up real-time subscription
+      const subscription = supabase
+         .channel("diagnosis-codes")
+         .on(
+            "postgres_changes",
+            {
+               event: "*",
+               schema: "public",
+               table: "diagnosis_codes",
+            },
+            () => {
+               fetchData(); // Refresh data when changes occur
+            }
+         )
+         .subscribe();
 
-  const handleNewDiagnosisChange = (e, field) => {
-    setNewDiagnosis({ ...newDiagnosis, [field]: e.target.value });
-  };
+      return () => {
+         subscription.unsubscribe();
+      };
+   }, []);
 
-  const handleAddDiagnosis = () => {
-    const newId = Math.max(...data.map(item => item.id), 0) + 1;
-    const newData = { ...newDiagnosis, id: newId };
-    setData([...data, newData]);
-    setNewDiagnosis({
-      diagnosis_code: "",
-      description: "",
-      diagnosis_type: "",
-      preferred_bit: "",
-      type: "",
-    });
-    document.querySelector('[role="dialog"]')?.close();
-  };
+   // Handle add new diagnosis code
+   const handleAdd = async (diagnosisData) => {
+      try {
+         const { data: newDiagnosis, error } =
+            await masterDataService.createDiagnosisCode(diagnosisData);
+         if (error) {
+            alert(`Error: ${error}`);
+            return;
+         }
+         // Data will be updated automatically via real-time subscription
+         alert("Diagnosis code added successfully");
+      } catch (error) {
+         console.error("Error adding diagnosis code:", error);
+         alert("Error occurred while adding diagnosis code");
+      }
+   };
 
-  const handleSave = () => {
-    setData(data.map(item => 
-      item.id === editedData.id ? editedData : item
-    ));
-    setEditId(null);
-  };
+   // Handle edit diagnosis code
+   const handleEdit = async (id, diagnosisData) => {
+      try {
+         const { data: updatedDiagnosis, error } =
+            await masterDataService.updateDiagnosisCode(id, diagnosisData);
+         if (error) {
+            alert(`Error: ${error}`);
+            return;
+         }
+         // Data will be updated automatically via real-time subscription
+         alert("Diagnosis code updated successfully");
+      } catch (error) {
+         console.error("Error updating diagnosis code:", error);
+         alert("Error occurred while updating diagnosis code");
+      }
+   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this diagnosis?")) {
-      setData(data.filter(item => item.id !== id));
-    }
-  };
+   // Handle delete diagnosis code
+   const handleDelete = async (id) => {
+      try {
+         // If id is an object, extract the actual id value
+         const actualId = typeof id === "object" && id !== null ? id.id : id;
+         console.log("Deleting diagnosis code with ID:", actualId);
 
-  return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Diagnosis Table</CardTitle>
-            <Modal
-              trigger={
-                <Button className="bg-primary hover:bg-primary/90">
-                  <FaPlus className="mr-2 h-4 w-4" /> Add Diagnosis
-                </Button>
-              }
-              title="Add New Diagnosis"
-              className="sm:max-w-[600px]"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                {Object.keys(newDiagnosis).map((key) => (
-                  <div key={key} className="flex flex-col gap-2">
-                    <label htmlFor={key} className="text-sm font-medium">
-                      {key.replace(/_/g, " ").toUpperCase()}
-                    </label>
-                    <Input
-                      id={key}
-                      placeholder={`Enter ${key.replace(/_/g, " ")}`}
-                      value={newDiagnosis[key]}
-                      onChange={(e) => handleNewDiagnosisChange(e, key)}
-                    />
-                  </div>
-                ))}
-                <div className="col-span-full flex justify-end mt-4">
-                  <Button onClick={handleAddDiagnosis}>
-                    Save Diagnosis
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={data}
-            columns={columns}
-            editId={editId}
-            editedData={editedData}
-            onEdit={handleEdit}
-            onSave={handleSave}
-            onDelete={handleDelete}
-            onInputChange={handleInputChange}
-          />
-        </CardContent>
-      </Card>
-    </div>
-  );
+         const { error } = await masterDataService.deleteDiagnosisCode(
+            actualId
+         );
+         if (error) {
+            console.error("Error from deleteDiagnosisCode:", error);
+            alert(`Error: ${error.message || JSON.stringify(error)}`);
+            return;
+         }
+         // Data will be updated automatically via real-time subscription
+         alert("Diagnosis code deleted successfully");
+      } catch (error) {
+         console.error("Error deleting diagnosis code:", error);
+         alert("Error occurred while deleting diagnosis code");
+      }
+   };
+
+   // Enhanced config with real-time operations using Supabase
+   const enhancedConfig = {
+      ...config,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
+      loading,
+      dataSource: "diagnosis_codes", // Connect to Supabase diagnosis_codes table
+      refreshData: () => {
+         setLoading(true);
+         masterDataService
+            .getDiagnosisCodes()
+            .then(({ data: diagnosisCodes }) => {
+               console.log("Refreshed diagnosis codes:", diagnosisCodes);
+               setData(diagnosisCodes || []);
+            })
+            .catch((error) =>
+               console.error("Error refreshing diagnosis codes:", error)
+            )
+            .finally(() => setLoading(false));
+      },
+   };
+
+   return <GenericTable {...enhancedConfig} data={data} />;
 };
 
 export default DiagnosisTable;

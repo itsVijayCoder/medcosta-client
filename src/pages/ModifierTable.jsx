@@ -1,253 +1,227 @@
 import React, { useState, useEffect } from "react";
-import { DataTable } from "@/components/ui/data-table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { FaPlus } from "react-icons/fa";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Modal } from "@/components/ui/modal";
+import GenericTable from "@/components/ui/generic-table";
+import { tableConfigs } from "@/data/tableConfigs";
+import { masterDataService } from "@/services/masterDataService";
+import { supabase } from "@/lib/supabaseClient";
+import { getTableDataWithFallback } from "@/lib/utils";
+import { fallbackData } from "@/data/static/fallbackData";
 
 const ModifierTable = () => {
-  const [data, setData] = useState([]);
-  const [editId, setEditId] = useState(null);
-  const [editedData, setEditedData] = useState({
-    id: 0,
-    specialty: "",
-    modifier_name: "",
-    is_default: "No",
-    is_active: "Yes",
-    created_date: "",
-    modified_date: "",
-    modified_by: "",
-  });
+   console.log("ModifierTable component rendering");
+   const [data, setData] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const config = tableConfigs.modifier;
+   console.log("Table config:", config);
 
-  const [newModifier, setNewModifier] = useState({
-    specialty: "",
-    modifier_name: "",
-    is_default: "No",
-    is_active: "Yes",
-    created_date: "",
-    modified_date: "",
-    modified_by: "",
-  });
+   // Debug helper function
+   const logDataDetails = (data, label) => {
+      console.log(`${label} - Type:`, typeof data);
+      console.log(`${label} - Is Array:`, Array.isArray(data));
+      console.log(
+         `${label} - Length:`,
+         Array.isArray(data) ? data.length : "N/A"
+      );
+      console.log(`${label} - Content:`, data);
+      if (Array.isArray(data) && data.length > 0) {
+         console.log(`${label} - First item keys:`, Object.keys(data[0]));
+      }
+   };
 
-  const columns = [
-    { header: "Specialty", accessorKey: "specialty" },
-    { header: "Modifier Name", accessorKey: "modifier_name" },
-    { header: "Default", accessorKey: "is_default" },
-    { header: "Active", accessorKey: "is_active" },
-    { header: "Created Date", accessorKey: "created_date" },
-    { header: "Modified Date", accessorKey: "modified_date" },
-    { header: "Modified By", accessorKey: "modified_by" },
-  ];
+   // Add a function to normalize the modifier data to match expected schema
+   const normalizeModifierData = (data) => {
+      if (!Array.isArray(data)) return [];
 
-  useEffect(() => {
-    fetchModifierData();
-  }, []);
+      return data.map((item) => ({
+         id: item.id,
+         modifier_code: item.modifier_code || "",
+         modifier_name: item.modifier_name || "",
+         specialty: item.specialty || "",
+         description: item.description || "",
+         is_default:
+            typeof item.is_default === "boolean" ? item.is_default : false,
+         is_active: typeof item.is_active === "boolean" ? item.is_active : true,
+         created_at: item.created_at || new Date().toISOString(),
+         updated_at: item.updated_at || new Date().toISOString(),
+      }));
+   };
 
-  const fetchModifierData = () => {
-    fetch("http://localhost/medcosta/index.php/modifier/get_modifier_data")
-      .then((res) => res.json())
-      .then((data) => setData(data))
-      .catch((err) => console.error("Error fetching modifier data:", err));
-  };
+   // Fetch real-time data from Supabase
+   useEffect(() => {
+      const fetchData = async () => {
+         try {
+            setLoading(true);
 
-  const handleEdit = (id, row) => {
-    setEditId(id);
-    setEditedData({ ...row });
-  };
+            // Get data from API with fallback to static data
+            console.log("Fetching modifiers from API...");
+            const modifiersResponse = await masterDataService.getModifiers();
+            logDataDetails(modifiersResponse, "Raw API response object");
 
-  const handleInputChange = (e, field) => {
-    setEditedData({ ...editedData, [field]: e.target.value });
-  };
+            // Extract and normalize data from the response
+            let modifiersData = [];
+            if (modifiersResponse && modifiersResponse.data) {
+               logDataDetails(modifiersResponse.data, "API response data");
+               modifiersData = modifiersResponse.data;
+            } else if (modifiersResponse && Array.isArray(modifiersResponse)) {
+               // Handle case where response might be the array directly
+               logDataDetails(modifiersResponse, "API response as array");
+               modifiersData = modifiersResponse;
+            }
 
-  const handleNewModifierChange = (e, field) => {
-    setNewModifier({ ...newModifier, [field]: e.target.value });
-  };
+            // If no data, try to get fallback data
+            if (!modifiersData.length) {
+               console.log("No data in API response, trying fallback");
+               const fallbackData = await getTableDataWithFallback(
+                  modifiersResponse,
+                  "modifier"
+               );
+               logDataDetails(fallbackData, "Fallback data");
+               modifiersData = fallbackData || [];
+            }
 
-  const handleAddModifier = () => {
-    fetch("http://localhost/medcosta/index.php/modifier/add_modifier", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newModifier),
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        if (result.status === "success") {
-          alert("Modifier added successfully");
-          setNewModifier({
-            specialty: "",
-            modifier_name: "",
-            is_default: "No",
-            is_active: "Yes",
-            created_date: "",
-            modified_date: "",
-            modified_by: "",
-          });
-          fetchModifierData();
-          document.querySelector('[role="dialog"]')?.close();
-        } else {
-          alert("Failed to add modifier");
-        }
-      })
-      .catch((err) => console.error("Add error:", err));
-  };
+            // Normalize the data to ensure it has the expected structure
+            const normalizedData = normalizeModifierData(modifiersData);
+            logDataDetails(normalizedData, "Normalized data");
 
-  const handleSave = () => {
-    fetch("http://localhost/medcosta/index.php/modifier/update_modifier", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editedData),
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        if (result.status === "success") {
-          alert("Modifier updated successfully");
-          setEditId(null);
-          fetchModifierData();
-        } else {
-          alert("Failed to update modifier");
-        }
-      })
-      .catch((err) => console.error("Update error:", err));
-  };
+            // Set the normalized data to state
+            setData(normalizedData);
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this modifier?")) {
-      fetch("http://localhost/medcosta/index.php/modifier/delete_modifier", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      })
-        .then((res) => res.json())
-        .then((result) => {
-          if (result.status === "success") {
-            alert("Modifier deleted successfully");
-            fetchModifierData();
-          } else {
-            alert("Failed to delete modifier");
-          }
-        })
-        .catch((err) => console.error("Delete error:", err));
-    }
-  };
+            console.log("Component data state after setting:", normalizedData);
+            console.log("Is data empty?", normalizedData.length === 0);
+         } catch (error) {
+            console.error("Error fetching modifiers:", error);
 
-  return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Modifier Table</CardTitle>
-            <Modal
-              trigger={
-                <Button className="bg-primary hover:bg-primary/90">
-                  <FaPlus className="mr-2 h-4 w-4" /> Add Modifier
-                </Button>
-              }
-              title="Add New Modifier"
-              className="sm:max-w-[600px]"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Specialty</label>
-                  <Input
-                    placeholder="Enter specialty"
-                    value={newModifier.specialty}
-                    onChange={(e) => handleNewModifierChange(e, "specialty")}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Modifier Name</label>
-                  <Input
-                    placeholder="Enter modifier name"
-                    value={newModifier.modifier_name}
-                    onChange={(e) => handleNewModifierChange(e, "modifier_name")}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Is Default</label>
-                  <Select
-                    value={newModifier.is_default}
-                    onValueChange={(value) => handleNewModifierChange({ target: { value } }, "is_default")}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select default status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Yes">Yes</SelectItem>
-                      <SelectItem value="No">No</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Is Active</label>
-                  <Select
-                    value={newModifier.is_active}
-                    onValueChange={(value) => handleNewModifierChange({ target: { value } }, "is_active")}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select active status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Yes">Yes</SelectItem>
-                      <SelectItem value="No">No</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Created Date</label>
-                  <Input
-                    type="date"
-                    value={newModifier.created_date}
-                    onChange={(e) => handleNewModifierChange(e, "created_date")}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Modified Date</label>
-                  <Input
-                    type="date"
-                    value={newModifier.modified_date}
-                    onChange={(e) => handleNewModifierChange(e, "modified_date")}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Modified By</label>
-                  <Input
-                    placeholder="Enter modified by"
-                    value={newModifier.modified_by}
-                    onChange={(e) => handleNewModifierChange(e, "modified_by")}
-                  />
-                </div>
-                <div className="col-span-full flex justify-end mt-4">
-                  <Button onClick={handleAddModifier}>
-                    Save Modifier
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={data}
-            columns={columns}
-            editId={editId}
-            editedData={editedData}
-            onEdit={handleEdit}
-            onSave={handleSave}
-            onDelete={handleDelete}
-            onInputChange={handleInputChange}
-          />
-        </CardContent>
-      </Card>
-    </div>
-  );
+            // On error, use the directly imported static data
+            console.log("Using imported fallback data after error");
+            const staticData = normalizeModifierData(
+               fallbackData.modifier || []
+            );
+            logDataDetails(staticData, "Static data after error");
+            setData(staticData);
+         } finally {
+            setLoading(false);
+         }
+      };
+
+      fetchData();
+
+      // Set up real-time subscription
+      const subscription = supabase
+         .channel("modifiers")
+         .on(
+            "postgres_changes",
+            {
+               event: "*",
+               schema: "public",
+               table: "modifiers",
+            },
+            () => {
+               fetchData(); // Refresh data when changes occur
+            }
+         )
+         .subscribe();
+
+      return () => {
+         subscription.unsubscribe();
+      };
+   }, []);
+
+   // Handle add new modifier
+   const handleAdd = async (modifierData) => {
+      try {
+         const { data: newModifier, error } =
+            await masterDataService.createModifier(modifierData);
+         if (error) {
+            alert(`Error: ${error}`);
+            return;
+         }
+         // Data will be updated automatically via real-time subscription
+         alert("Modifier added successfully");
+      } catch (error) {
+         console.error("Error adding modifier:", error);
+         alert("Error occurred while adding modifier");
+      }
+   };
+
+   // Handle edit modifier
+   const handleEdit = async (id, modifierData) => {
+      try {
+         const { data: updatedModifier, error } =
+            await masterDataService.updateModifier(id, modifierData);
+         if (error) {
+            alert(`Error: ${error}`);
+            return;
+         }
+         // Data will be updated automatically via real-time subscription
+         alert("Modifier updated successfully");
+      } catch (error) {
+         console.error("Error updating modifier:", error);
+         alert("Error occurred while updating modifier");
+      }
+   };
+
+   // Handle delete modifier
+   const handleDelete = async (id) => {
+      console.log("ModifierTable handleDelete called with id:", id);
+      console.log("Type of id:", typeof id);
+
+      try {
+         // If id is an object, extract the actual id value
+         const actualId = typeof id === "object" && id !== null ? id.id : id;
+         console.log("Using actualId for deletion:", actualId);
+
+         const { error } = await masterDataService.deleteModifier(actualId);
+         if (error) {
+            console.error("Error from deleteModifier:", error);
+            return {
+               success: false,
+               error: error.message || JSON.stringify(error),
+            };
+         }
+         // Data will be updated automatically via real-time subscription
+         return { success: true };
+      } catch (error) {
+         console.error("Exception deleting modifier:", error);
+         return {
+            success: false,
+            error: error.message || "Error occurred while deleting modifier",
+         };
+      }
+   };
+
+   // Enhanced config with real-time operations using Supabase
+   const enhancedConfig = {
+      ...config,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
+      loading,
+      showEditButton: true, // Show edit button in the table
+      dataSource: "modifiers", // Connect to Supabase modifiers table
+      refreshData: () => {
+         setLoading(true);
+         masterDataService
+            .getModifiers()
+            .then(({ data: modifiers }) => {
+               console.log("Refreshed modifiers:", modifiers);
+               const normalizedData = normalizeModifierData(modifiers || []);
+               setData(normalizedData);
+            })
+            .catch((error) => {
+               console.error("Error refreshing modifiers:", error);
+               // Use fallback data on error
+               const staticData = normalizeModifierData(
+                  fallbackData.modifier || []
+               );
+               setData(staticData);
+            })
+            .finally(() => setLoading(false));
+      },
+   };
+
+   console.log("ModifierTable rendering with data:", data);
+   console.log("ModifierTable data length:", data.length);
+   console.log("ModifierTable is data empty?", data.length === 0);
+
+   return <GenericTable {...enhancedConfig} data={data} />;
 };
 
 export default ModifierTable;

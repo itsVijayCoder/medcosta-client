@@ -1,201 +1,140 @@
 import React, { useState, useEffect } from "react";
-import { DataTable } from "@/components/ui/data-table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FaPlus } from "react-icons/fa";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Modal } from "@/components/ui/modal";
+import GenericTable from "@/components/ui/generic-table";
+import { tableConfigs } from "@/data/tableConfigs";
+import { masterDataService } from "@/services/masterDataService";
+import { supabase } from "@/lib/supabaseClient";
 
 const ProviderTable = () => {
-  const [data, setData] = useState([]);
-  const [editId, setEditId] = useState(null);
-  const [editedData, setEditedData] = useState({
-    id: 0,
-    name: "",
-    location: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    phone: "",
-    npi: "",
-    taxonomy_code: "",
-    state_lic: "",
-  });
+   const [data, setData] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const config = tableConfigs.provider;
 
-  const [newProvider, setNewProvider] = useState({
-    name: "",
-    location: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    phone: "",
-    npi: "",
-    taxonomy_code: "",
-    state_lic: "",
-  });
+   // Fetch real-time data from Supabase
+   useEffect(() => {
+      const fetchData = async () => {
+         try {
+            const { data: providers, error } =
+               await masterDataService.getProviders();
+            if (error) {
+               console.error("Error fetching providers:", error);
+               setLoading(false);
+               return;
+            }
+            console.log("Providers from API:", providers);
+            setData(providers || []);
+         } catch (error) {
+            console.error("Error:", error);
+         } finally {
+            setLoading(false);
+         }
+      };
 
-  const columns = [
-    { header: "Name", accessorKey: "name" },
-    { header: "Location", accessorKey: "location" },
-    { header: "Address", accessorKey: "address" },
-    { header: "City", accessorKey: "city" },
-    { header: "State", accessorKey: "state" },
-    { header: "ZIP", accessorKey: "zip" },
-    { header: "Phone", accessorKey: "phone" },
-    { header: "NPI", accessorKey: "npi" },
-    { header: "Taxonomy Code", accessorKey: "taxonomy_code" },
-    { header: "State License", accessorKey: "state_lic" },
-  ];
+      fetchData();
 
-  useEffect(() => {
-    fetchProviderData();
-  }, []);
+      // Set up real-time subscription
+      const subscription = supabase
+         .channel("providers")
+         .on(
+            "postgres_changes",
+            {
+               event: "*",
+               schema: "public",
+               table: "providers",
+            },
+            () => {
+               fetchData(); // Refresh data when changes occur
+            }
+         )
+         .subscribe();
 
-  const fetchProviderData = () => {
-    fetch("http://localhost/medcosta/index.php/provider/get_provider_data")
-      .then((response) => response.json())
-      .then((data) => setData(data))
-      .catch((error) => console.error("Error fetching data:", error));
-  };
+      return () => {
+         subscription.unsubscribe();
+      };
+   }, []);
 
-  const handleEdit = (id, row) => {
-    setEditId(id);
-    setEditedData({ ...row });
-  };
+   // Handle add new provider
+   const handleAdd = async (providerData) => {
+      try {
+         const { data: newProvider, error } =
+            await masterDataService.createProvider(providerData);
+         if (error) {
+            alert(`Error: ${error}`);
+            return;
+         }
+         // Data will be updated automatically via real-time subscription
+         alert("Provider added successfully");
+      } catch (error) {
+         console.error("Error adding provider:", error);
+         alert("Error occurred while adding provider");
+      }
+   };
 
-  const handleInputChange = (e, field) => {
-    setEditedData({ ...editedData, [field]: e.target.value });
-  };
+   // Handle edit provider
+   const handleEdit = async (id, providerData) => {
+      try {
+         // Remove the 'locations' property if it exists in the data to avoid the error
+         const { locations, ...cleanProviderData } = providerData;
 
-  const handleNewProviderChange = (e, field) => {
-    setNewProvider({ ...newProvider, [field]: e.target.value });
-  };
+         console.log("Editing provider with data:", cleanProviderData);
 
-  const handleAddProvider = () => {
-    fetch("http://localhost/medcosta/index.php/provider/add_provider", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newProvider),
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === "success") {
-          alert("Provider added successfully");
-          setNewProvider({
-            name: "",
-            location: "",
-            address: "",
-            city: "",
-            state: "",
-            zip: "",
-            phone: "",
-            npi: "",
-            taxonomy_code: "",
-            state_lic: "",
-          });
-          fetchProviderData();
-          document.querySelector('[role="dialog"]')?.close();
-        } else {
-          alert("Failed to add provider");
-        }
-      })
-      .catch((error) => console.error("Error adding provider:", error));
-  };
+         const { data: updatedProvider, error } =
+            await masterDataService.updateProvider(id, cleanProviderData);
+         if (error) {
+            alert(`Error: ${error}`);
+            return;
+         }
+         // Data will be updated automatically via real-time subscription
+         alert("Provider updated successfully");
+      } catch (error) {
+         console.error("Error updating provider:", error);
+         alert("Error occurred while updating provider");
+      }
+   };
 
-  const handleSave = () => {
-    fetch("http://localhost/medcosta/index.php/provider/update_provider", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: editId, ...editedData }),
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === "success") {
-          alert("Provider updated successfully");
-          setEditId(null);
-          fetchProviderData();
-        } else {
-          alert("Failed to update provider");
-        }
-      })
-      .catch((error) => console.error("Error updating provider:", error));
-  };
+   // Handle delete provider
+   const handleDelete = async (id) => {
+      try {
+         // If id is an object, extract the actual id value
+         const actualId = typeof id === "object" && id !== null ? id.id : id;
+         console.log("Deleting provider with ID:", actualId);
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this provider?")) {
-      fetch("http://localhost/medcosta/index.php/provider/delete_provider", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      })
-        .then((response) => response.json())
-        .then((result) => {
-          if (result.status === "success") {
-            alert("Provider deleted successfully");
-            fetchProviderData();
-          } else {
-            alert(result.message || "Failed to delete provider");
-          }
-        })
-        .catch((error) => console.error("Error deleting provider:", error));
-    }
-  };
+         const { error } = await masterDataService.deleteProvider(actualId);
+         if (error) {
+            console.error("Error from deleteProvider:", error);
+            alert(`Error: ${error.message || JSON.stringify(error)}`);
+            return;
+         }
+         // Data will be updated automatically via real-time subscription
+         alert("Provider deleted successfully");
+      } catch (error) {
+         console.error("Error deleting provider:", error);
+         alert("Error occurred while deleting provider");
+      }
+   };
 
-  return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Provider Table</CardTitle>
-            <Modal
-              trigger={
-                <Button className="bg-primary hover:bg-primary/90">
-                  <FaPlus className="mr-2 h-4 w-4" /> Add Provider
-                </Button>
-              }
-              title="Add New Provider"
-              className="sm:max-w-[600px]"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                {Object.keys(newProvider).map((key) => (
-                  <div key={key} className="flex flex-col gap-2">
-                    <label htmlFor={key} className="text-sm font-medium">
-                      {key.replace(/_/g, " ").toUpperCase()}
-                    </label>
-                    <Input
-                      id={key}
-                      placeholder={`Enter ${key.replace(/_/g, " ")}`}
-                      value={newProvider[key]}
-                      onChange={(e) => handleNewProviderChange(e, key)}
-                    />
-                  </div>
-                ))}
-                <div className="col-span-full flex justify-end mt-4">
-                  <Button onClick={handleAddProvider}>
-                    Save Provider
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={data}
-            columns={columns}
-            editId={editId}
-            editedData={editedData}
-            onEdit={handleEdit}
-            onSave={handleSave}
-            onDelete={handleDelete}
-            onInputChange={handleInputChange}
-          />
-        </CardContent>
-      </Card>
-    </div>
-  );
+   // Enhanced config with real-time operations using Supabase
+   const enhancedConfig = {
+      ...config,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
+      loading,
+      dataSource: "providers", // Connect to Supabase providers table
+      refreshData: () => {
+         setLoading(true);
+         masterDataService
+            .getProviders()
+            .then(({ data: providers }) => {
+               console.log("Refreshed providers:", providers);
+               setData(providers || []);
+            })
+            .catch((error) =>
+               console.error("Error refreshing providers:", error)
+            )
+            .finally(() => setLoading(false));
+      },
+   };
+
+   return <GenericTable {...enhancedConfig} data={data} />;
 };
 
 export default ProviderTable;
