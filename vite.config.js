@@ -12,6 +12,12 @@ export default defineConfig({
          brotliSize: true,
       }),
    ],
+   server: {
+      // Allow any ngrok host
+      allowedHosts: ["localhost", "127.0.0.1", ".ngrok-free.app"],
+      // Uncomment the following if you need to access the app from other devices in your network
+      // host: true,
+   },
    resolve: {
       alias: {
          "@": path.resolve(__dirname, "./src"),
