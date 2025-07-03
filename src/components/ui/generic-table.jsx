@@ -36,6 +36,8 @@ const GenericTable = ({
    dataSource = "", // "locations", "insurance_companies", "providers", "diagnosis_codes", "procedures", "modifiers"
    onDataChange, // Callback when data changes (create, update, delete)
    refreshData, // Function to refresh data from the parent
+   customActions = [], // Custom action buttons for each row
+   onSelectedRowsChange, // Callback to get selected rows
 }) => {
    console.log("GenericTable rendering with initialData:", initialData);
    console.log("GenericTable loading state:", loading);
@@ -54,6 +56,13 @@ const GenericTable = ({
       console.log("initialData changed:", initialData);
       setData(initialData);
    }, [initialData]);
+
+   // Notify parent of selected rows changes
+   useEffect(() => {
+      if (onSelectedRowsChange) {
+         onSelectedRowsChange(selectedRows);
+      }
+   }, [selectedRows, onSelectedRowsChange]);
 
    // Create initial form state from form fields
    const createInitialFormState = () => {
@@ -502,8 +511,11 @@ const GenericTable = ({
                   onValueChange={(value) =>
                      handleNewRecordChange({ target: { value } }, key)
                   }
+                  name={`select-${key}`}
                >
                   <SelectTrigger
+                     id={`select-trigger-${key}`}
+                     name={`select-${key}`}
                      className={`border-opacity-20 focus:border-opacity-50 ${
                         className || ""
                      }`}
@@ -527,6 +539,8 @@ const GenericTable = ({
             return (
                <Input
                   type='date'
+                  id={`date-input-${key}`}
+                  name={`date-${key}`}
                   value={newRecord[key]}
                   onChange={(e) => handleNewRecordChange(e, key)}
                   className={`border-opacity-20 focus:border-opacity-50 ${
@@ -538,6 +552,8 @@ const GenericTable = ({
             return (
                <Input
                   placeholder={placeholder || `Enter ${label.toLowerCase()}`}
+                  id={`text-input-${key}`}
+                  name={`text-${key}`}
                   value={newRecord[key]}
                   onChange={(e) => handleNewRecordChange(e, key)}
                   className={`border-opacity-20 focus:border-opacity-50 ${
@@ -620,6 +636,7 @@ const GenericTable = ({
                   emptyMessage={loading ? "Loading..." : emptyMessage}
                   addButton={showAddButton}
                   actions={showEditButton}
+                  customActions={customActions}
                />
             </Card>
          </div>

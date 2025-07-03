@@ -109,7 +109,10 @@ export const masterDataService = {
          // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("locations")
-            .update({ is_active: false })
+            .update({
+               is_active: false,
+               updated_at: new Date().toISOString(),
+            })
             .eq("id", id);
 
          if (error) {
@@ -237,7 +240,10 @@ export const masterDataService = {
          // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("insurance_companies")
-            .update({ is_active: false })
+            .update({
+               is_active: false,
+               updated_at: new Date().toISOString(),
+            })
             .eq("id", id);
 
          if (error) {
@@ -384,7 +390,10 @@ export const masterDataService = {
          // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("providers")
-            .update({ is_active: false })
+            .update({
+               is_active: false,
+               updated_at: new Date().toISOString(),
+            })
             .eq("id", id);
 
          if (error) {
@@ -528,7 +537,10 @@ export const masterDataService = {
          // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("diagnosis_codes")
-            .update({ is_active: false })
+            .update({
+               is_active: false,
+               updated_at: new Date().toISOString(),
+            })
             .eq("id", id);
 
          if (error) {
@@ -689,7 +701,10 @@ export const masterDataService = {
          // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("procedures")
-            .update({ is_active: false })
+            .update({
+               is_active: false,
+               updated_at: new Date().toISOString(),
+            })
             .eq("id", id);
 
          if (error) {
@@ -835,7 +850,10 @@ export const masterDataService = {
          // Perform soft delete by updating is_active to false
          const { data, error } = await supabase
             .from("modifiers")
-            .update({ is_active: false })
+            .update({
+               is_active: false,
+               updated_at: new Date().toISOString(),
+            })
             .eq("id", id);
 
          if (error) {
@@ -851,85 +869,151 @@ export const masterDataService = {
       }
    },
 
-   // ==================== DELETED VISITS ====================
+   // ==================== DELETED RECORDS (SOFT DELETE) ====================
 
    /**
-    * Get all deleted visits
+    * Get deleted records from any table (where is_active = false)
     */
-   async getDeletedVisits(filters = {}) {
+   async getDeletedRecords(tableName, filters = {}) {
       try {
-         console.log("getDeletedVisits called with filters:", filters);
+         console.log(
+            `getDeletedRecords called for ${tableName} with filters:`,
+            filters
+         );
 
-         let query = supabase.from("deleted_visits").select("*");
+         let query = supabase
+            .from(tableName)
+            .select("*")
+            .eq("is_active", false);
 
+         // Apply search filters based on table type
          if (filters.search) {
-            query = query.or(
-               `CaseNumber.ilike.%${filters.search}%,DoctorName.ilike.%${filters.search}%`
-            );
+            switch (tableName) {
+               case "locations":
+                  query = query.ilike("location_name", `%${filters.search}%`);
+                  break;
+               case "insurance_companies":
+                  query = query.ilike("name", `%${filters.search}%`);
+                  break;
+               case "providers":
+                  query = query.or(
+                     `name.ilike.%${filters.search}%,npi.ilike.%${filters.search}%`
+                  );
+                  break;
+               case "diagnosis_codes":
+                  query = query.or(
+                     `diagnosis_code.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
+                  );
+                  break;
+               case "procedures":
+                  query = query.or(
+                     `procedure_code.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
+                  );
+                  break;
+               case "modifiers":
+                  query = query.or(
+                     `modifier_name.ilike.%${filters.search}%,modifier_code.ilike.%${filters.search}%`
+                  );
+                  break;
+            }
          }
 
-         if (filters.speciality) {
-            query = query.eq("speciality", filters.speciality);
+         // Apply other filters
+         if (
+            filters.specialty &&
+            (tableName === "providers" ||
+               tableName === "procedures" ||
+               tableName === "modifiers")
+         ) {
+            query = query.eq("specialty", filters.specialty);
          }
 
-         console.log("Executing query on deleted_visits table");
-         const { data, error } = await query.order("EventDate", {
+         if (
+            filters.category &&
+            (tableName === "diagnosis_codes" || tableName === "procedures")
+         ) {
+            query = query.eq("category", filters.category);
+         }
+
+         if (
+            filters.state &&
+            (tableName === "locations" || tableName === "insurance_companies")
+         ) {
+            query = query.eq("state", filters.state);
+         }
+
+         const { data, error } = await query.order("updated_at", {
             ascending: false,
-         });
-
-         console.log("getDeletedVisits result:", {
-            recordCount: data ? data.length : 0,
-            hasError: !!error,
-            error,
          });
 
          if (error) throw error;
 
+         console.log(`getDeletedRecords result for ${tableName}:`, {
+            recordCount: data ? data.length : 0,
+            hasError: !!error,
+         });
+
          return { data: data || [], error: null };
       } catch (error) {
-         console.error("Error in getDeletedVisits:", error);
+         console.error(`Error in getDeletedRecords for ${tableName}:`, error);
          return { data: [], error: handleSupabaseError(error) };
       }
    },
 
    /**
-    * Delete visit permanently
+    * Restore a record (set is_active = true)
     */
-   async deleteVisitPermanently(id) {
+   async restoreRecord(tableName, id) {
       try {
-         console.log(
-            "deleteVisitPermanently called with ID:",
-            id,
-            "Type:",
-            typeof id
-         );
+         console.log(`restoreRecord called for ${tableName} with ID:`, id);
 
-         // Ensure ID is in the correct format (UUID string)
-         if (!id) {
-            console.error("Invalid ID provided:", id);
-            throw new Error("Invalid ID provided for deletion");
-         }
-
-         // Log the exact query we're about to run for debugging
-         console.log(`Running: DELETE FROM deleted_visits WHERE id = '${id}'`);
-
-         // According to Supabase docs, delete directly
          const { data, error } = await supabase
-            .from("deleted_visits")
-            .delete()
-            .eq("id", id);
-
-         console.log("Delete result:", { data, error });
+            .from(tableName)
+            .update({
+               is_active: true,
+               updated_at: new Date().toISOString(),
+            })
+            .eq("id", id)
+            .select();
 
          if (error) {
-            console.error("Error in deleteVisitPermanently:", error);
+            console.error("Error restoring record:", error);
             throw error;
          }
 
-         // Success response
-         return { data: true, error: null };
+         console.log("Record restored successfully:", data);
+         return { data: data && data.length > 0 ? data[0] : null, error: null };
       } catch (error) {
-         console.error("Error in deleteVisitPermanently:", error);
+         console.error("Error in restoreRecord:", error);
+         return { data: null, error: handleSupabaseError(error) };
+      }
+   },
+
+   /**
+    * Permanently delete a record (complete removal from database)
+    */
+   async permanentlyDeleteRecord(tableName, id) {
+      try {
+         console.log(
+            `permanentlyDeleteRecord called for ${tableName} with ID:`,
+            id
+         );
+
+         const { data, error } = await supabase
+            .from(tableName)
+            .delete()
+            .eq("id", id)
+            .select();
+
+         if (error) {
+            console.error("Error permanently deleting record:", error);
+            throw error;
+         }
+
+         console.log("Record permanently deleted successfully:", data);
+         return { data: data && data.length > 0 ? data[0] : null, error: null };
+      } catch (error) {
+         console.error("Error in permanentlyDeleteRecord:", error);
          return { data: null, error: handleSupabaseError(error) };
       }
    },

@@ -218,7 +218,9 @@ const ModifierTable = () => {
    console.log("ModifierTable data length:", data.length);
    console.log("ModifierTable is data empty?", data.length === 0);
 
-   return <GenericTable {...enhancedConfig} data={data} />;
+   return (
+      <GenericTable {...enhancedConfig} data={data} showEditButton={true} />
+   );
 };
 
 export default ModifierTable;

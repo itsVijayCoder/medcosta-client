@@ -53,6 +53,7 @@ export function ModernDataTable({
    actions = true,
    className = "",
    emptyMessage = "No data available",
+   customActions = [], // New prop for custom action buttons
 }) {
    const [selectedRows, setSelectedRows] = useState(new Set());
    const [searchTerm, setSearchTerm] = useState("");
@@ -177,6 +178,8 @@ export function ModernDataTable({
                         <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
                         <Input
                            placeholder='Search...'
+                           id='data-table-search'
+                           name='search'
                            value={searchTerm}
                            onChange={(e) => setSearchTerm(e.target.value)}
                            className='pl-10 w-64'
@@ -325,6 +328,8 @@ export function ModernDataTable({
                                        {editId === row.id ? (
                                           <Input
                                              type='text'
+                                             id={`edit-${column.accessorKey}-${row.id}`}
+                                             name={`edit-${column.accessorKey}`}
                                              value={
                                                 editedData[
                                                    column.accessorKey
@@ -376,26 +381,66 @@ export function ModernDataTable({
                                           </>
                                        ) : (
                                           <>
-                                             <Button
-                                                size='sm'
-                                                variant='outline'
-                                                onClick={() =>
-                                                   onEdit?.(row.id, row)
-                                                }
-                                                className='h-8 w-8 p-0'
-                                             >
-                                                <FaEdit className='h-4 w-4 text-primary' />
-                                             </Button>
-                                             <Button
-                                                size='sm'
-                                                variant='outline'
-                                                onClick={() =>
-                                                   onDelete?.(row.id)
-                                                }
-                                                className='h-8 w-8 p-0'
-                                             >
-                                                <FaTrash className='h-4 w-4 text-destructive' />
-                                             </Button>
+                                             {/* Custom Actions First */}
+                                             {customActions &&
+                                                customActions.map(
+                                                   (action, index) => (
+                                                      <Button
+                                                         key={index}
+                                                         size='sm'
+                                                         variant={
+                                                            action.variant ||
+                                                            "outline"
+                                                         }
+                                                         onClick={() =>
+                                                            action.onClick?.(
+                                                               row.id
+                                                            )
+                                                         }
+                                                         className={`h-8 w-8 p-0 ${
+                                                            action.className ||
+                                                            ""
+                                                         }`}
+                                                         title={action.label}
+                                                      >
+                                                         {action.icon ? (
+                                                            <action.icon className='h-4 w-4' />
+                                                         ) : (
+                                                            <span className='text-xs'>
+                                                               {action.label}
+                                                            </span>
+                                                         )}
+                                                      </Button>
+                                                   )
+                                                )}
+
+                                             {/* Default Edit Button */}
+                                             {onEdit && (
+                                                <Button
+                                                   size='sm'
+                                                   variant='outline'
+                                                   onClick={() =>
+                                                      onEdit?.(row.id, row)
+                                                   }
+                                                   className='h-8 w-8 p-0'
+                                                >
+                                                   <FaEdit className='h-4 w-4 text-primary' />
+                                                </Button>
+                                             )}
+
+                                             {/* Default Delete Button */}
+                                             {onDelete && (
+                                                <Button
+                                                   size='sm'
+                                                   variant='outline'
+                                                   onClick={() =>
+                                                      onDelete?.(row.id)
+                                                   }
+                                                   className='h-8 w-8 p-0'
+                                                >
+                                                   <FaTrash className='h-4 w-4 text-destructive' />
+                                                </Button>
+                                             )}
                                           </>
                                        )}
                                     </div>
