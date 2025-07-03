@@ -43,7 +43,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AuthContext } from "@/App";
-import logoImage from "../assets/logo.png";
+import logoImage from "../assets/WorknoFault.png";
 
 // Menu items configuration
 const menuItems = [
@@ -266,6 +266,20 @@ export function AppSidebar({ setRouteName, ...props }) {
       }
    }, [searchTerm, filteredMenuItems]);
 
+   // Auto-open menus when a child route is active
+   useEffect(() => {
+      const newOpenMenus = new Set(openMenus);
+      menuItems.forEach((item) => {
+         if (
+            item.submenu &&
+            item.submenu.some((subItem) => location.pathname === subItem.path)
+         ) {
+            newOpenMenus.add(item.label);
+         }
+      });
+      setOpenMenus(newOpenMenus);
+   }, [location.pathname]);
+
    // Keyboard navigation
    const handleKeyDown = useCallback(
       (e) => {
@@ -338,19 +352,19 @@ export function AppSidebar({ setRouteName, ...props }) {
 
             <div className='flex items-center gap-3 px-3 py-1 relative z-10'>
                <div className='relative group'>
-                  <div className='h-10 w-10 bg-primary-gradient rounded-xl flex items-center justify-center shadow-lg transform transition-transform duration-200 group-hover:scale-105 ring-2 ring-white/20'>
-                     <div className='text-white font-bold text-lg'>W</div>
+                  <div className='h-10 w-auto transform transition-transform duration-200 group-hover:scale-105'>
+                     <img
+                        src={logoImage}
+                        alt='WorkNoFault'
+                        className='h-10 object-contain'
+                     />
                   </div>
-                  <div className='absolute -top-1 -right-1 h-3 w-3 bg-primary-400 rounded-full shadow-sm animate-pulse border border-white'></div>
                </div>
-               <div className='group-data-[collapsible=icon]:hidden'>
-                  <h2 className='text-lg font-bold text-primary-800 dark:text-primary-200 tracking-tight'>
-                     WorkNoFault
-                  </h2>
+               {/* <div className='group-data-[collapsible=icon]:hidden'>
                   <p className='text-xs text-primary-600 dark:text-primary-300 font-medium'>
                      Healthcare Management
                   </p>
-               </div>
+               </div> */}
             </div>
          </SidebarHeader>
 
@@ -392,7 +406,7 @@ export function AppSidebar({ setRouteName, ...props }) {
                      const hasActiveChild = item.submenu?.some(
                         (subItem) => location.pathname === subItem.path
                      );
-                     const isActive = isItemActive;
+                     const isActive = isItemActive || hasActiveChild;
                      const isHighlighted =
                         item.path && isItemHighlighted(item.path);
 
@@ -412,12 +426,12 @@ export function AppSidebar({ setRouteName, ...props }) {
                                        h-11 rounded-xl transition-all duration-200 
                                        ${
                                           isActive
-                                             ? "bg-primary-400 text-primary-foreground shadow-menu-active transform scale-105"
+                                             ? "bg-sidebar-primary  shadow-menu-active transform scale-105"
                                              : "hover:bg-primary/10 hover:text-primary dark:hover:bg-sidebar-accent hover:shadow-sm"
                                        }
                                        ${
                                           isHighlighted
-                                             ? "ring-2 ring-primary-300 bg-primary-50 shadow-glow-primary"
+                                             ? "ring-2 ring-primary bg-sidebar-primary shadow-glow-primary"
                                              : ""
                                        }
                                     `}
@@ -448,14 +462,14 @@ export function AppSidebar({ setRouteName, ...props }) {
                                                 ${
                                                    location.pathname ===
                                                    subItem.path
-                                                      ? "bg-primary text-primary-foreground shadow-menu-active"
+                                                      ? "bg-sidebar-primary text-primary-foreground shadow-menu-active"
                                                       : "hover:bg-primary/20 hover:text-primary dark:hover:bg-sidebar-accent hover:shadow-sm"
                                                 }
                                                 ${
                                                    isItemHighlighted(
                                                       subItem.path
                                                    )
-                                                      ? "ring-2 ring-primary bg-primary shadow-glow-primary"
+                                                      ? "ring-2 ring-primary bg-sidebar-primary shadow-glow-primary"
                                                       : ""
                                                 }
                                              `}
@@ -494,12 +508,12 @@ export function AppSidebar({ setRouteName, ...props }) {
                                  h-11 rounded-xl transition-all duration-200 
                                  ${
                                     isActive
-                                       ? "bg-primary text-primary-foreground shadow-menu-active transform scale-105"
+                                       ? "active:bg-sidebar-primary text-primary-foreground shadow-menu-active transform scale-105"
                                        : "hover:bg-primary/20 hover:text-primary dark:hover:bg-sidebar-accent hover:shadow-sm"
                                  }
                                  ${
                                     isHighlighted
-                                       ? "ring-2 ring-primary/10 bg-primary shadow-glow-primary"
+                                       ? "ring-2 ring-primary/10 bg-sidebar-primary shadow-glow-primary"
                                        : ""
                                  }
                               `}

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { AuthContext } from "@/App";
 import { authService } from "@/services/authService";
-import logo from "@/assets/medcosta-login.jpg";
+import logo from "@/assets/WorknoFault.png";
 
 export default function Login() {
    const [formData, setFormData] = useState({
@@ -78,16 +78,13 @@ export default function Login() {
                   {/* Content */}
                   <div className='z-10'>
                      <div className='flex items-center space-x-3 mb-12'>
-                        {/* <img
+                        <img
                            src={logo}
-                           alt='MedCosta'
-                           className='h-10 w-auto'
-                        /> */}
-                        <h1 className='text-2xl font-bold text-white tracking-tight'>
-                           WorkNoFault
-                        </h1>
+                           alt='WorkNoFault'
+                           className='h-14 w-auto '
+                        />
                      </div>
-                     <h2 className='text-3xl md:text-4xl font-bold text-white mb-4'>
+                     <h2 className='text-3xl md:text-4xl font-bold text-primary mb-4'>
                         Welcome back to the Healthcare Management System
                      </h2>
                      <p className='text-primary-100 text-lg max-w-sm'>
@@ -197,7 +194,7 @@ export default function Login() {
                            <input
                               type='checkbox'
                               id='remember'
-                              className='h-4 w-4 rounded border-border text-primary focus:ring-primary'
+                              className='h-4 w-4 rounded border-border text-primary focus:ring-primary '
                            />
                            <Label
                               htmlFor='remember'
@@ -231,7 +228,7 @@ export default function Login() {
 
                         <Button
                            type='submit'
-                           className='w-full py-2.5 bg-primary-gradient text-primary-foreground font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:scale-[1.02] focus:ring-4 focus:ring-primary/50'
+                           className='w-full py-2.5 bg-primary text-primary-foreground font-medium rounded-lg transition-all duration-200 ease-in-out transform hover:scale-[1.02] focus:ring-4 focus:ring-primary/50'
                            disabled={isLoading}
                         >
                            {isLoading ? (

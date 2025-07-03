@@ -2,6 +2,7 @@ import React from "react";
 import { Bell, User, ChevronDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
+import logoImage from "../assets/WorknoFault.png";
 
 const Header = () => {
    const { state } = useSidebar();
@@ -14,13 +15,15 @@ const Header = () => {
             <div className='flex items-center gap-3'>
                {/* Show title only when sidebar is collapsed */}
                {isCollapsed && (
-                  <div className='flex flex-col animate-in slide-in-from-left-2 duration-200'>
-                     <h1 className='text-xl font-bold text-foreground tracking-tight'>
-                        WorkNoFault
-                     </h1>
-                     <p className='text-xs text-muted-foreground font-medium'>
+                  <div className='flex items-center gap-2 animate-in slide-in-from-left-2 duration-200'>
+                     <img
+                        src={logoImage}
+                        alt='WorkNoFault'
+                        className='h-10 object-contain'
+                     />
+                     {/* <p className='text-xs text-muted-foreground font-medium'>
                         Healthcare Management
-                     </p>
+                     </p> */}
                   </div>
                )}
             </div>
