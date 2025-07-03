@@ -10,6 +10,8 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/components/ui/select";
+import NotificationDialog from "@/components/ui/notification-dialog";
+import ConfirmationDialog from "@/components/ui/confirmation-dialog";
 
 // ============================================================================
 // CONSTANTS & STATIC DATA (following DRY principle)
@@ -204,6 +206,23 @@ const useDeletedRecords = (selectedTable) => {
 const useRecordActions = (selectedTable, refresh) => {
    const [loading, setLoading] = useState(false);
 
+   // State for dialogs
+   const [notificationDialog, setNotificationDialog] = useState({
+      open: false,
+      title: "",
+      message: "",
+      type: "info", // success, error, warning, info
+   });
+
+   const [confirmDialog, setConfirmDialog] = useState({
+      open: false,
+      title: "",
+      description: "",
+      confirmAction: null,
+      selectedRows: [],
+      isRestore: false,
+   });
+
    const processSelectedRows = useCallback((selectedRowsOrId, data) => {
       if (
          typeof selectedRowsOrId === "string" ||
@@ -226,22 +245,8 @@ const useRecordActions = (selectedTable, refresh) => {
       return [];
    }, []);
 
-   const handleRestore = useCallback(
-      async (selectedRowsOrId, data) => {
-         const selectedRows = processSelectedRows(selectedRowsOrId, data);
-
-         if (selectedRows.length === 0) {
-            alert("Please select at least one record to restore.");
-            return;
-         }
-
-         const confirmMessage =
-            selectedRows.length === 1
-               ? "Are you sure you want to restore this record?"
-               : `Are you sure you want to restore ${selectedRows.length} records?`;
-
-         if (!window.confirm(confirmMessage)) return;
-
+   const executeRestore = useCallback(
+      async (selectedRows) => {
          setLoading(true);
          try {
             const promises = selectedRows.map(async (row) => {
@@ -258,34 +263,68 @@ const useRecordActions = (selectedTable, refresh) => {
                (r) => r.status === "success"
             ).length;
 
-            alert(`${successCount} record(s) restored successfully`);
+            setNotificationDialog({
+               open: true,
+               title: "Success",
+               message: `${successCount} record(s) restored successfully`,
+               type: "success",
+            });
+
             refresh();
          } catch (error) {
             console.error("Restore error:", error);
-            alert("Failed to restore records");
+            setNotificationDialog({
+               open: true,
+               title: "Error",
+               message: "Failed to restore records",
+               type: "error",
+            });
          } finally {
             setLoading(false);
          }
       },
-      [processSelectedRows, selectedTable, refresh]
+      [selectedTable, refresh, setNotificationDialog]
    );
 
-   const handlePermanentDelete = useCallback(
-      async (selectedRowsOrId, data) => {
+   const handleRestore = useCallback(
+      (selectedRowsOrId, data) => {
          const selectedRows = processSelectedRows(selectedRowsOrId, data);
 
          if (selectedRows.length === 0) {
-            alert("Please select at least one record to delete permanently.");
+            setNotificationDialog({
+               open: true,
+               title: "Warning",
+               message: "Please select at least one record to restore.",
+               type: "warning",
+            });
             return;
          }
 
          const confirmMessage =
             selectedRows.length === 1
-               ? "⚠️ WARNING: Are you sure you want to permanently delete this record? This action cannot be undone!"
-               : `⚠️ WARNING: Are you sure you want to permanently delete ${selectedRows.length} records? This action cannot be undone!`;
+               ? "Are you sure you want to restore this record?"
+               : `Are you sure you want to restore ${selectedRows.length} records?`;
 
-         if (!window.confirm(confirmMessage)) return;
+         // Open confirmation dialog
+         setConfirmDialog({
+            open: true,
+            title: "Confirm Restore",
+            description: confirmMessage,
+            confirmAction: () => executeRestore(selectedRows),
+            selectedRows: selectedRows,
+            isRestore: true,
+         });
+      },
+      [
+         processSelectedRows,
+         executeRestore,
+         setNotificationDialog,
+         setConfirmDialog,
+      ]
+   );
 
+   const executePermanentDelete = useCallback(
+      async (selectedRows) => {
          setLoading(true);
          try {
             const promises = selectedRows.map(async (row) => {
@@ -303,19 +342,75 @@ const useRecordActions = (selectedTable, refresh) => {
                (r) => r.status === "success"
             ).length;
 
-            alert(`${successCount} record(s) deleted permanently`);
+            setNotificationDialog({
+               open: true,
+               title: "Success",
+               message: `${successCount} record(s) deleted permanently`,
+               type: "success",
+            });
             refresh();
          } catch (error) {
             console.error("Permanent delete error:", error);
-            alert("Failed to delete records permanently");
+            setNotificationDialog({
+               open: true,
+               title: "Error",
+               message: "Failed to delete records permanently",
+               type: "error",
+            });
          } finally {
             setLoading(false);
          }
       },
-      [processSelectedRows, selectedTable, refresh]
+      [selectedTable, refresh, setNotificationDialog]
    );
 
-   return { handleRestore, handlePermanentDelete, loading };
+   const handlePermanentDelete = useCallback(
+      (selectedRowsOrId, data) => {
+         const selectedRows = processSelectedRows(selectedRowsOrId, data);
+
+         if (selectedRows.length === 0) {
+            setNotificationDialog({
+               open: true,
+               title: "Warning",
+               message:
+                  "Please select at least one record to delete permanently.",
+               type: "warning",
+            });
+            return;
+         }
+
+         const confirmMessage =
+            selectedRows.length === 1
+               ? "⚠️ Are you sure you want to permanently delete this record? This action cannot be undone!"
+               : `⚠️ Are you sure you want to permanently delete ${selectedRows.length} records? This action cannot be undone!`;
+
+         // Open confirmation dialog with destructive styling
+         setConfirmDialog({
+            open: true,
+            title: "Confirm Permanent Delete",
+            description: confirmMessage,
+            confirmAction: () => executePermanentDelete(selectedRows),
+            selectedRows: selectedRows,
+            isRestore: false,
+         });
+      },
+      [
+         processSelectedRows,
+         executePermanentDelete,
+         setNotificationDialog,
+         setConfirmDialog,
+      ]
+   );
+
+   return {
+      handleRestore,
+      handlePermanentDelete,
+      loading,
+      notificationDialog,
+      setNotificationDialog,
+      confirmDialog,
+      setConfirmDialog,
+   };
 };
 
 // ============================================================================
@@ -356,6 +451,10 @@ const DeleteTable = () => {
       handleRestore,
       handlePermanentDelete,
       loading: actionLoading,
+      notificationDialog,
+      setNotificationDialog,
+      confirmDialog,
+      setConfirmDialog,
    } = useRecordActions(selectedTable, refresh);
 
    // Stable event handlers
@@ -406,23 +505,64 @@ const DeleteTable = () => {
       if (selectedRowIds.length > 0) {
          handleRestore(selectedRowIds, data);
       } else {
-         alert("Please select records to restore");
+         setNotificationDialog({
+            open: true,
+            title: "Warning",
+            message: "Please select records to restore",
+            type: "warning",
+         });
       }
-   }, [selectedRowIds, handleRestore, data]);
+   }, [selectedRowIds, handleRestore, data, setNotificationDialog]);
 
    const handleBulkDelete = useCallback(() => {
       if (selectedRowIds.length > 0) {
          handlePermanentDelete(selectedRowIds, data);
       } else {
-         alert("Please select records to permanently delete");
+         setNotificationDialog({
+            open: true,
+            title: "Warning",
+            message: "Please select records to permanently delete",
+            type: "warning",
+         });
       }
-   }, [selectedRowIds, handlePermanentDelete, data]);
+   }, [selectedRowIds, handlePermanentDelete, data, setNotificationDialog]);
 
    const isLoading = dataLoading || actionLoading;
 
    return (
       <div className='min-h-screen dark:bg-gray-950 p-6'>
          <div className='container mx-auto max-w-7xl'>
+            {/* Confirmation Dialog */}
+            <ConfirmationDialog
+               open={confirmDialog.open}
+               onOpenChange={(open) =>
+                  setConfirmDialog((prev) => ({ ...prev, open }))
+               }
+               title={confirmDialog.title}
+               description={confirmDialog.description}
+               confirmText={
+                  confirmDialog.isRestore ? "Restore" : "Delete Permanently"
+               }
+               cancelText='Cancel'
+               variant={confirmDialog.isRestore ? "default" : "destructive"}
+               onConfirm={() => {
+                  if (confirmDialog.confirmAction) {
+                     confirmDialog.confirmAction();
+                     setConfirmDialog((prev) => ({ ...prev, open: false }));
+                  }
+               }}
+            />
+
+            {/* Notification Dialog */}
+            <NotificationDialog
+               open={notificationDialog.open}
+               onOpenChange={(open) =>
+                  setNotificationDialog((prev) => ({ ...prev, open }))
+               }
+               title={notificationDialog.title}
+               message={notificationDialog.message}
+               type={notificationDialog.type}
+            />
             {/* Header Section */}
             <div className='mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
                <div>
@@ -440,14 +580,14 @@ const DeleteTable = () => {
                      Current selection: <strong>{selectedTable}</strong>
                   </div>
 
-                  <Button
+                  {/* <Button
                      onClick={() => setUseNativeSelect(!useNativeSelect)}
                      variant='outline'
                      size='sm'
                      className='text-xs'
                   >
                      {useNativeSelect ? "Use Radix" : "Use Native"}
-                  </Button>
+                  </Button> */}
 
                   {/* Table Selector */}
                   <TableSelector
@@ -458,25 +598,7 @@ const DeleteTable = () => {
                </div>
             </div>
 
-            {/* Bulk Action Buttons */}
-            <div className='mb-4 flex gap-2'>
-               <Button
-                  onClick={handleBulkRestore}
-                  variant='outline'
-                  className='bg-green-50 hover:bg-green-100 text-green-700 border-green-300'
-                  disabled={selectedRowIds.length === 0 || isLoading}
-               >
-                  🔄 Restore Selected ({selectedRowIds.length})
-               </Button>
-
-               <Button
-                  onClick={handleBulkDelete}
-                  variant='destructive'
-                  disabled={selectedRowIds.length === 0 || isLoading}
-               >
-                  🗑️ Delete Permanently ({selectedRowIds.length})
-               </Button>
-            </div>
+            {/* Bulk actions now inside the table header */}
 
             {/* Main Table */}
             <GenericTable
@@ -486,6 +608,9 @@ const DeleteTable = () => {
                loading={isLoading}
                onDelete={(selectedRows) =>
                   handlePermanentDelete(selectedRows, data)
+               }
+               onBulkRestore={(selectedRows) =>
+                  handleRestore(selectedRows, data)
                }
                dataSource={selectedTable}
                onSelectedRowsChange={handleSelectedRowsChange}

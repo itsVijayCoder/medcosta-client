@@ -38,6 +38,7 @@ const GenericTable = ({
    modalWidth = "sm:max-w-[700px]",
    loading = false,
    onDelete: customOnDelete,
+   onBulkRestore: customOnBulkRestore, // Add support for bulk restore
    showAddButton = true,
    showEditButton = true,
    deleteButtonText = "Delete",
@@ -84,6 +85,7 @@ const GenericTable = ({
       open: false,
       title: "Confirm Bulk Delete",
       description: "Are you sure you want to delete the selected records?",
+      ids: [],
    });
 
    // Update data when initialData prop changes
@@ -635,9 +637,37 @@ const GenericTable = ({
       }
    };
 
-   const handleBulkDelete = () => {
-      if (selectedRows.length === 0) return;
-      handleDelete(selectedRows);
+   const handleBulkDelete = (rowIds = null) => {
+      // If specific IDs are passed (from ModernDataTable), use those
+      // Otherwise use the internal selectedRows state
+      const idsToDelete = rowIds || selectedRows;
+
+      if (!idsToDelete || idsToDelete.length === 0) {
+         console.log("No rows selected for bulk delete");
+         return;
+      }
+
+      console.log("Bulk delete initiated for IDs:", idsToDelete);
+      handleDelete(idsToDelete);
+   };
+
+   // Add the handleBulkRestore function
+   const handleBulkRestore = (rowIds = null) => {
+      // If specific IDs are passed (from ModernDataTable), use those
+      // Otherwise use the internal selectedRows state
+      const idsToRestore = rowIds || selectedRows;
+
+      if (!idsToRestore || idsToRestore.length === 0) {
+         console.log("No rows selected for bulk restore");
+         return;
+      }
+
+      console.log("Bulk restore initiated for IDs:", idsToRestore);
+
+      // If custom bulk restore handler provided, use it
+      if (customOnBulkRestore) {
+         customOnBulkRestore(idsToRestore);
+      }
    };
 
    const handleExport = () => {
@@ -802,6 +832,7 @@ const GenericTable = ({
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}
                   onBulkDelete={handleBulkDelete}
+                  onBulkRestore={handleBulkRestore}
                   onExport={handleExport}
                   selectedRows={selectedRows}
                   setSelectedRows={setSelectedRows}

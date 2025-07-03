@@ -7,6 +7,7 @@ import {
    TableHeader,
    TableRow,
 } from "@/components/ui/table";
+import { RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,6 +62,7 @@ export function ModernDataTable({
    onSave,
    onDelete,
    onBulkDelete,
+   onBulkRestore, // Add support for bulk restore
    onInputChange,
    onAdd,
    searchable = true,
@@ -139,11 +141,42 @@ export function ModernDataTable({
 
    // Handle bulk delete
    const handleBulkDelete = () => {
-      if (selectedRows.size === 0) return;
+      if (selectedRows.size === 0) {
+         console.log("ModernDataTable: No rows selected for bulk delete");
+         return;
+      }
+
+      // Convert Set to Array for GenericTable
+      const selectedRowsArray = Array.from(selectedRows);
+      console.log(
+         "ModernDataTable: Sending bulk delete for IDs:",
+         selectedRowsArray
+      );
+
       // Direct call to onBulkDelete without showing the modal
       // This way, only the GenericTable's confirmation will be shown
       if (onBulkDelete) {
-         onBulkDelete(Array.from(selectedRows));
+         onBulkDelete(selectedRowsArray);
+      }
+   };
+
+   // Handle bulk restore
+   const handleBulkRestore = () => {
+      if (selectedRows.size === 0) {
+         console.log("ModernDataTable: No rows selected for bulk restore");
+         return;
+      }
+
+      // Convert Set to Array for GenericTable
+      const selectedRowsArray = Array.from(selectedRows);
+      console.log(
+         "ModernDataTable: Sending bulk restore for IDs:",
+         selectedRowsArray
+      );
+
+      // Direct call to onBulkRestore
+      if (onBulkRestore) {
+         onBulkRestore(selectedRowsArray);
       }
    };
 
@@ -267,6 +300,17 @@ export function ModernDataTable({
                         <Badge variant='secondary'>
                            {selectedRows.size} selected
                         </Badge>
+                        {onBulkRestore && (
+                           <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={handleBulkRestore}
+                              className='flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-300'
+                           >
+                              <RotateCcw className='h-4 w-4' />
+                              Restore Selected
+                           </Button>
+                        )}
                         <Button
                            variant='destructive'
                            size='sm'
