@@ -88,10 +88,6 @@ const LocationTable = () => {
 
    // Handle delete location
    const handleDelete = async (id) => {
-      if (!confirm("Are you sure you want to delete this location?")) {
-         return;
-      }
-
       try {
          // If id is an object, extract the actual id value
          const actualId = typeof id === "object" && id !== null ? id.id : id;
@@ -114,7 +110,8 @@ const LocationTable = () => {
    // Enhanced config with real-time operations
    const enhancedConfig = {
       ...config,
-      onDelete: handleDelete,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
       loading,
       dataSource: "locations", // Connect to Supabase locations table
       refreshData: () => {

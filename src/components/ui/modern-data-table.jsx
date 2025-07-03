@@ -27,6 +27,22 @@ import {
    DropdownMenuItem,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogHeader,
+   DialogTitle,
+} from "@/components/ui/dialog";
+import {
+   Select,
+   SelectContent,
+   SelectItem,
+   SelectTrigger,
+   SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import ConfirmationDialog from "@/components/ui/confirmation-dialog";
 import jQuery from "jquery";
 import "datatables.net-dt";
 import "datatables.net-buttons-dt";
@@ -54,10 +70,18 @@ export function ModernDataTable({
    className = "",
    emptyMessage = "No data available",
    customActions = [], // New prop for custom action buttons
+   formFields = [], // Form fields for edit modal
+   dynamicOptions = {}, // Dynamic options for select fields
 }) {
    const [selectedRows, setSelectedRows] = useState(new Set());
    const [searchTerm, setSearchTerm] = useState("");
    const [filteredData, setFilteredData] = useState(data);
+   const [editModalOpen, setEditModalOpen] = useState(false);
+   const [editingRecord, setEditingRecord] = useState(null);
+   const [editFormData, setEditFormData] = useState({});
+   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+   const [deleteTarget, setDeleteTarget] = useState(null);
+   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
    // Filter data based on search term
    useEffect(() => {
@@ -116,16 +140,66 @@ export function ModernDataTable({
    // Handle bulk delete
    const handleBulkDelete = () => {
       if (selectedRows.size === 0) return;
+      // Direct call to onBulkDelete without showing the modal
+      // This way, only the GenericTable's confirmation will be shown
+      if (onBulkDelete) {
+         onBulkDelete(Array.from(selectedRows));
+      }
+   };
 
-      if (
-         window.confirm(
-            `Are you sure you want to delete ${selectedRows.size} selected items?`
-         )
-      ) {
-         if (onBulkDelete) {
-            onBulkDelete(Array.from(selectedRows));
-         }
-         setSelectedRows(new Set());
+   // Keep this for backward compatibility but it won't be used with GenericTable
+   const confirmBulkDelete = () => {
+      if (onBulkDelete) {
+         onBulkDelete(Array.from(selectedRows));
+      }
+      setSelectedRows(new Set());
+      setBulkDeleteConfirmOpen(false);
+   };
+
+   // Handle single delete
+   const handleSingleDelete = (rowId) => {
+      // Direct call to onDelete without showing the modal
+      // This way, only the GenericTable's confirmation will be shown
+      if (onDelete) {
+         onDelete(rowId);
+      }
+   };
+
+   // Keep this for backward compatibility but it won't be used with GenericTable
+   const confirmSingleDelete = () => {
+      if (onDelete && deleteTarget) {
+         onDelete(deleteTarget);
+      }
+      setDeleteTarget(null);
+      setDeleteConfirmOpen(false);
+   };
+
+   // Handle edit
+   const handleEditClick = (rowId, rowData) => {
+      if (onEdit) {
+         // If external edit handler provided, use it
+         onEdit(rowData);
+      } else {
+         // Otherwise use internal modal
+         setEditingRecord(rowData);
+         setEditFormData({ ...rowData });
+         setEditModalOpen(true);
+      }
+   };
+
+   const handleEditFormChange = (field, value) => {
+      setEditFormData((prev) => ({
+         ...prev,
+         [field]: value,
+      }));
+   };
+
+   const handleSaveEdit = () => {
+      if (onSave && editingRecord) {
+         onSave(editFormData);
+         setEditModalOpen(false);
+         setEditingRecord(null);
+         setEditFormData({});
       }
    };
 
@@ -415,12 +489,15 @@ export function ModernDataTable({
                                                 )}
 
                                              {/* Default Edit Button */}
-                                             {onEdit && (
+                                             {(onEdit || onSave) && (
                                                 <Button
                                                    size='sm'
                                                    variant='outline'
                                                    onClick={() =>
-                                                      onEdit?.(row.id, row)
+                                                      handleEditClick(
+                                                         row.id,
+                                                         row
+                                                      )
                                                    }
                                                    className='h-8 w-8 p-0'
                                                 >
@@ -434,7 +511,7 @@ export function ModernDataTable({
                                                    size='sm'
                                                    variant='outline'
                                                    onClick={() =>
-                                                      onDelete?.(row.id)
+                                                      handleSingleDelete(row.id)
                                                    }
                                                    className='h-8 w-8 p-0'
                                                 >
@@ -453,6 +530,88 @@ export function ModernDataTable({
                </div>
             )}
          </CardContent>
+
+         {/* Edit Modal */}
+         <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+            <DialogContent className='sm:max-w-[600px]'>
+               <DialogHeader>
+                  <DialogTitle>Edit {title}</DialogTitle>
+                  <DialogDescription>
+                     Make changes to the record and click save when done.
+                  </DialogDescription>
+               </DialogHeader>
+
+               <div className='grid gap-4 py-4'>
+                  {formFields.map((field) => (
+                     <div
+                        className='grid grid-cols-4 items-center gap-4'
+                        key={field.key}
+                     >
+                        <Label htmlFor={field.key} className='text-right'>
+                           {field.label}
+                        </Label>
+
+                        {field.type === "select" ? (
+                           <div className='col-span-3'>
+                              <Select
+                                 value={editFormData[field.key] || ""}
+                                 onValueChange={(value) =>
+                                    handleEditFormChange(field.key, value)
+                                 }
+                              >
+                                 <SelectTrigger>
+                                    <SelectValue
+                                       placeholder={`Select ${field.label}`}
+                                    />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                    {(field.loadOptions &&
+                                    dynamicOptions[field.key]
+                                       ? dynamicOptions[field.key]
+                                       : field.options || []
+                                    ).map((option) => (
+                                       <SelectItem
+                                          key={option.value}
+                                          value={option.value.toString()}
+                                       >
+                                          {option.label}
+                                       </SelectItem>
+                                    ))}
+                                 </SelectContent>
+                              </Select>
+                           </div>
+                        ) : (
+                           <Input
+                              id={field.key}
+                              type={field.type || "text"}
+                              className='col-span-3'
+                              value={editFormData[field.key] || ""}
+                              onChange={(e) =>
+                                 handleEditFormChange(field.key, e.target.value)
+                              }
+                           />
+                        )}
+                     </div>
+                  ))}
+               </div>
+
+               <div className='flex justify-end gap-2'>
+                  <Button
+                     variant='outline'
+                     onClick={() => setEditModalOpen(false)}
+                  >
+                     Cancel
+                  </Button>
+                  <Button onClick={handleSaveEdit}>Save Changes</Button>
+               </div>
+            </DialogContent>
+         </Dialog>
+
+         {/* 
+            Confirmation dialogs are removed from ModernDataTable 
+            to avoid duplicate confirmations with GenericTable
+            The dialogs now show only from the GenericTable component
+         */}
       </Card>
    );
 }

@@ -371,16 +371,14 @@ export const masterDataService = {
             return { data: null, error: "Invalid ID provided" };
          }
 
+         // Ensure we don't include 'locations' object in the updates
+         const { locations, ...cleanUpdates } = updates;
+
          const { data, error } = await supabase
             .from("providers")
-            .update(updates)
-            .eq("id", id).select(`
-               *,
-               locations (
-                 id,
-                 location_name
-               )
-             `);
+            .update(cleanUpdates)
+            .eq("id", id)
+            .select("*");
 
          console.log("Update provider result:", { data, error });
 

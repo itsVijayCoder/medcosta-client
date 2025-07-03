@@ -96,10 +96,6 @@ const DiagnosisTable = () => {
 
    // Handle delete diagnosis code
    const handleDelete = async (id) => {
-      if (!confirm("Are you sure you want to delete this diagnosis code?")) {
-         return;
-      }
-
       try {
          // If id is an object, extract the actual id value
          const actualId = typeof id === "object" && id !== null ? id.id : id;
@@ -124,7 +120,8 @@ const DiagnosisTable = () => {
    // Enhanced config with real-time operations using Supabase
    const enhancedConfig = {
       ...config,
-      onDelete: handleDelete,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
       loading,
       dataSource: "diagnosis_codes", // Connect to Supabase diagnosis_codes table
       refreshData: () => {

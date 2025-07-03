@@ -9,11 +9,20 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/components/ui/select";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaEdit } from "react-icons/fa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { masterDataService } from "@/services/masterDataService";
 import { yesNoOptions } from "@/data/tableConfigs";
+import NotificationDialog from "@/components/ui/notification-dialog";
+import ConfirmationDialog from "@/components/ui/confirmation-dialog";
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogHeader,
+   DialogTitle,
+} from "@/components/ui/dialog";
 
 const GenericTable = ({
    title,
@@ -51,6 +60,31 @@ const GenericTable = ({
       error: null,
    });
    const [dynamicOptions, setDynamicOptions] = useState({});
+
+   // New state variables for edit functionality
+   const [editModalOpen, setEditModalOpen] = useState(false);
+   const [editRecord, setEditRecord] = useState(null);
+
+   // New state variables for dialogs
+   const [notificationDialog, setNotificationDialog] = useState({
+      open: false,
+      title: "",
+      message: "",
+      type: "info", // success, error, warning, info
+   });
+
+   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState({
+      open: false,
+      ids: null,
+      title: "Confirm Delete",
+      description: "Are you sure you want to delete this record?",
+   });
+
+   const [bulkDeleteConfirmDialog, setBulkDeleteConfirmDialog] = useState({
+      open: false,
+      title: "Confirm Bulk Delete",
+      description: "Are you sure you want to delete the selected records?",
+   });
 
    // Update data when initialData prop changes
    useEffect(() => {
@@ -106,6 +140,17 @@ const GenericTable = ({
 
    const handleNewRecordChange = (e, field) => {
       setNewRecord({ ...newRecord, [field]: e.target.value });
+   };
+
+   // Function to open edit modal with pre-filled data
+   const handleEditClick = (record) => {
+      setEditRecord({ ...record });
+      setEditModalOpen(true);
+   };
+
+   // Function to handle changes in edit form
+   const handleEditRecordChange = (e, field) => {
+      setEditRecord({ ...editRecord, [field]: e.target.value });
    };
 
    const handleAddRecord = async () => {
@@ -185,11 +230,14 @@ const GenericTable = ({
          if (result.error) {
             console.error(`Error adding ${dataSource}:`, result.error);
             setAddStatus({ loading: false, error: result.error });
-            alert(
-               `Error adding record: ${
-                  result.error.message || JSON.stringify(result.error)
-               }`
-            );
+
+            // Show error notification
+            setNotificationDialog({
+               open: true,
+               title: "Error Adding Record",
+               message: result.error.message || JSON.stringify(result.error),
+               type: "error",
+            });
             return;
          }
 
@@ -209,13 +257,24 @@ const GenericTable = ({
          setNewRecord(createInitialFormState());
          document.querySelector('[role="dialog"]')?.close();
 
-         // Show success message
-         alert(`${title.split(" ")[0]} added successfully!`);
+         // Show success notification
+         setNotificationDialog({
+            open: true,
+            title: "Success",
+            message: `${title.split(" ")[0]} added successfully!`,
+            type: "success",
+         });
          setAddStatus({ loading: false, error: null });
       } catch (error) {
          console.error(`Error in handleAddRecord for ${dataSource}:`, error);
          setAddStatus({ loading: false, error: error });
-         alert(`Error adding record: ${error.message || "Unknown error"}`);
+         // Show error notification
+         setNotificationDialog({
+            open: true,
+            title: "Error Adding Record",
+            message: error.message || "Unknown error",
+            type: "error",
+         });
       }
    };
 
@@ -310,11 +369,14 @@ const GenericTable = ({
          if (result.error) {
             console.error(`Error updating ${dataSource}:`, result.error);
             setUpdateStatus({ loading: false, error: result.error });
-            alert(
-               `Error updating record: ${
-                  result.error.message || JSON.stringify(result.error)
-               }`
-            );
+
+            // Show error notification
+            setNotificationDialog({
+               open: true,
+               title: "Error Updating Record",
+               message: result.error.message || JSON.stringify(result.error),
+               type: "error",
+            });
             return;
          }
 
@@ -330,14 +392,72 @@ const GenericTable = ({
             onDataChange("update", result.data);
          }
 
-         // Show success message
-         alert(`${title.split(" ")[0]} updated successfully!`);
+         // Close edit modal if it was used for this update
+         if (editModalOpen) {
+            setEditModalOpen(false);
+            setEditRecord(null);
+         }
+
+         // Show success notification
+         setNotificationDialog({
+            open: true,
+            title: "Success",
+            message: `${title.split(" ")[0]} updated successfully!`,
+            type: "success",
+         });
          setUpdateStatus({ loading: false, error: null });
       } catch (error) {
          console.error(`Error in handleUpdate for ${dataSource}:`, error);
          setUpdateStatus({ loading: false, error: error });
-         alert(`Error updating record: ${error.message || "Unknown error"}`);
+         // Show error notification
+         setNotificationDialog({
+            open: true,
+            title: "Error Updating Record",
+            message: error.message || "Unknown error",
+            type: "error",
+         });
       }
+   };
+
+   const handleEditSave = () => {
+      if (!editRecord || !editRecord.id) {
+         console.error("No edit record or ID provided for update");
+         return;
+      }
+
+      // Remove any nested objects (like locations) to prevent API errors
+      const {
+         locations,
+         insurance_companies,
+         providers,
+         diagnosis_codes,
+         procedures,
+         modifiers,
+         ...baseData
+      } = editRecord;
+
+      // Handle boolean values properly
+      const dataToUpdate = { ...baseData };
+      if (dataToUpdate.is_preferred !== undefined) {
+         dataToUpdate.is_preferred = Boolean(
+            dataToUpdate.is_preferred === true ||
+               dataToUpdate.is_preferred === "true"
+         );
+      }
+      if (dataToUpdate.is_default !== undefined) {
+         dataToUpdate.is_default = Boolean(
+            dataToUpdate.is_default === true ||
+               dataToUpdate.is_default === "true"
+         );
+      }
+      if (dataToUpdate.is_active !== undefined) {
+         dataToUpdate.is_active = Boolean(
+            dataToUpdate.is_active === true || dataToUpdate.is_active === "true"
+         );
+      }
+
+      console.log("Prepared data for update:", dataToUpdate);
+      handleUpdate(dataToUpdate);
    };
 
    const handleDelete = (ids) => {
@@ -353,143 +473,165 @@ const GenericTable = ({
             customOnDelete(ids);
          }
       } else {
-         // Default delete behavior - make sure to call the appropriate Supabase delete method
-         if (
-            window.confirm(
-               `Are you sure you want to delete ${
-                  Array.isArray(ids) ? ids.length : 1
-               } record(s)?`
-            )
-         ) {
-            if (dataSource) {
-               try {
-                  if (Array.isArray(ids)) {
-                     // Handle bulk delete
-                     Promise.all(
-                        ids.map((id) => {
-                           switch (dataSource) {
-                              case "locations":
-                                 return masterDataService.deleteLocation(id);
-                              case "insurance_companies":
-                                 return masterDataService.deleteInsuranceCompany(
-                                    id
-                                 );
-                              case "providers":
-                                 return masterDataService.deleteProvider(id);
-                              case "diagnosis_codes":
-                                 return masterDataService.deleteDiagnosisCode(
-                                    id
-                                 );
-                              case "procedures":
-                                 return masterDataService.deleteProcedure(id);
-                              case "modifiers":
-                                 return masterDataService.deleteModifier(id);
-                              default:
-                                 console.error(
-                                    `Unknown data source: ${dataSource}`
-                                 );
-                                 return Promise.reject(
-                                    `Unknown data source: ${dataSource}`
-                                 );
-                           }
-                        })
-                     ).then(() => {
-                        // Refresh data
-                        if (refreshData) {
-                           refreshData();
-                        } else {
-                           setData(
-                              data.filter((item) => !ids.includes(item.id))
-                           );
-                        }
+         // Default delete behavior - open confirmation dialog
+         if (Array.isArray(ids)) {
+            // Bulk delete confirmation
+            setBulkDeleteConfirmDialog({
+               open: true,
+               title: "Confirm Bulk Delete",
+               description: `Are you sure you want to delete ${ids.length} record(s)? This action sets records as inactive.`,
+               ids: ids,
+            });
+         } else {
+            // Single delete confirmation
+            setDeleteConfirmDialog({
+               open: true,
+               title: "Confirm Delete",
+               description:
+                  "Are you sure you want to delete this record? This action sets the record as inactive.",
+               ids: ids,
+            });
+         }
+      }
+   };
 
-                        // Call onDataChange if provided
-                        if (onDataChange) {
-                           onDataChange("delete", ids);
-                        }
+   const confirmDelete = (ids) => {
+      if (!dataSource) return;
 
-                        setSelectedRows([]);
-                     });
-                  } else {
-                     // Handle single delete
-                     let deletePromise;
-
-                     switch (dataSource) {
-                        case "locations":
-                           deletePromise =
-                              masterDataService.deleteLocation(ids);
-                           break;
-                        case "insurance_companies":
-                           deletePromise =
-                              masterDataService.deleteInsuranceCompany(ids);
-                           break;
-                        case "providers":
-                           deletePromise =
-                              masterDataService.deleteProvider(ids);
-                           break;
-                        case "diagnosis_codes":
-                           deletePromise =
-                              masterDataService.deleteDiagnosisCode(ids);
-                           break;
-                        case "procedures":
-                           deletePromise =
-                              masterDataService.deleteProcedure(ids);
-                           break;
-                        case "modifiers":
-                           deletePromise =
-                              masterDataService.deleteModifier(ids);
-                           break;
-                        default:
-                           console.error(`Unknown data source: ${dataSource}`);
-                           return;
-                     }
-
-                     deletePromise.then((result) => {
-                        if (result.error) {
-                           console.error(
-                              `Error deleting ${dataSource}:`,
-                              result.error
-                           );
-                           alert(
-                              `Error deleting record: ${
-                                 result.error.message ||
-                                 JSON.stringify(result.error)
-                              }`
-                           );
-                           return;
-                        }
-
-                        // Refresh data
-                        if (refreshData) {
-                           refreshData();
-                        } else {
-                           setData(data.filter((item) => item.id !== ids));
-                        }
-
-                        // Call onDataChange if provided
-                        if (onDataChange) {
-                           onDataChange("delete", ids);
-                        }
-                     });
+      try {
+         if (Array.isArray(ids)) {
+            // Handle bulk delete
+            Promise.all(
+               ids.map((id) => {
+                  switch (dataSource) {
+                     case "locations":
+                        return masterDataService.deleteLocation(id);
+                     case "insurance_companies":
+                        return masterDataService.deleteInsuranceCompany(id);
+                     case "providers":
+                        return masterDataService.deleteProvider(id);
+                     case "diagnosis_codes":
+                        return masterDataService.deleteDiagnosisCode(id);
+                     case "procedures":
+                        return masterDataService.deleteProcedure(id);
+                     case "modifiers":
+                        return masterDataService.deleteModifier(id);
+                     default:
+                        console.error(`Unknown data source: ${dataSource}`);
+                        return Promise.reject(
+                           `Unknown data source: ${dataSource}`
+                        );
                   }
-               } catch (error) {
-                  console.error(`Error deleting ${dataSource}:`, error);
-                  alert(
-                     `Error deleting record: ${
-                        error.message || "Unknown error"
-                     }`
-                  );
+               })
+            ).then((results) => {
+               // Check if any results have errors
+               const errors = results.filter((r) => r.error);
+               if (errors.length > 0) {
+                  setNotificationDialog({
+                     open: true,
+                     title: "Error Deleting Records",
+                     message: `Failed to delete ${errors.length} record(s).`,
+                     type: "error",
+                  });
+                  return;
                }
-            } else {
-               // Fallback to local-only delete if no dataSource provided
-               if (Array.isArray(ids)) {
+
+               // Refresh data
+               if (refreshData) {
+                  refreshData();
+               } else {
                   setData(data.filter((item) => !ids.includes(item.id)));
+               }
+
+               // Call onDataChange if provided
+               if (onDataChange) {
+                  onDataChange("delete", ids);
+               }
+
+               setNotificationDialog({
+                  open: true,
+                  title: "Success",
+                  message: `Successfully deleted ${ids.length} record(s).`,
+                  type: "success",
+               });
+
+               setSelectedRows([]);
+               setBulkDeleteConfirmDialog((prev) => ({ ...prev, open: false }));
+            });
+         } else {
+            // Handle single delete
+            let deletePromise;
+
+            switch (dataSource) {
+               case "locations":
+                  deletePromise = masterDataService.deleteLocation(ids);
+                  break;
+               case "insurance_companies":
+                  deletePromise = masterDataService.deleteInsuranceCompany(ids);
+                  break;
+               case "providers":
+                  deletePromise = masterDataService.deleteProvider(ids);
+                  break;
+               case "diagnosis_codes":
+                  deletePromise = masterDataService.deleteDiagnosisCode(ids);
+                  break;
+               case "procedures":
+                  deletePromise = masterDataService.deleteProcedure(ids);
+                  break;
+               case "modifiers":
+                  deletePromise = masterDataService.deleteModifier(ids);
+                  break;
+               default:
+                  console.error(`Unknown data source: ${dataSource}`);
+                  setDeleteConfirmDialog((prev) => ({ ...prev, open: false }));
+                  return;
+            }
+
+            deletePromise.then((result) => {
+               if (result.error) {
+                  console.error(`Error deleting ${dataSource}:`, result.error);
+                  setNotificationDialog({
+                     open: true,
+                     title: "Error Deleting Record",
+                     message:
+                        result.error.message || JSON.stringify(result.error),
+                     type: "error",
+                  });
+                  return;
+               }
+
+               // Refresh data
+               if (refreshData) {
+                  refreshData();
                } else {
                   setData(data.filter((item) => item.id !== ids));
                }
-               setSelectedRows([]);
-            }
+
+               // Call onDataChange if provided
+               if (onDataChange) {
+                  onDataChange("delete", ids);
+               }
+
+               setNotificationDialog({
+                  open: true,
+                  title: "Success",
+                  message: `Record deleted successfully.`,
+                  type: "success",
+               });
+
+               setDeleteConfirmDialog((prev) => ({ ...prev, open: false }));
+            });
          }
+      } catch (error) {
+         console.error(`Error deleting ${dataSource}:`, error);
+         setNotificationDialog({
+            open: true,
+            title: "Error",
+            message: `Error deleting record: ${
+               error.message || "Unknown error"
+            }`,
+            type: "error",
+         });
       }
    };
 
@@ -668,6 +810,152 @@ const GenericTable = ({
                   addButton={showAddButton}
                   actions={showEditButton}
                   customActions={customActions}
+                  formFields={formFields}
+                  dynamicOptions={dynamicOptions}
+                  onEdit={handleEditClick}
+               />
+
+               {/* Edit Modal */}
+               {editRecord && (
+                  <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+                     <DialogContent className='sm:max-w-[600px]'>
+                        <DialogHeader>
+                           <DialogTitle>Edit {title.split(" ")[0]}</DialogTitle>
+                           <DialogDescription>
+                              Make changes to the record and click save when
+                              done.
+                           </DialogDescription>
+                        </DialogHeader>
+
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4 p-4 max-h-[70vh] overflow-y-auto'>
+                           {formFields &&
+                              formFields.map((field) => (
+                                 <div
+                                    key={field.key}
+                                    className={
+                                       field.fullWidth ? "col-span-full" : ""
+                                    }
+                                 >
+                                    <label className='block text-sm font-medium text-foreground mb-2'>
+                                       {field.label}
+                                    </label>
+                                    {field.type === "select" ? (
+                                       <Select
+                                          value={
+                                             editRecord[
+                                                field.key
+                                             ]?.toString() || ""
+                                          }
+                                          onValueChange={(value) =>
+                                             setEditRecord({
+                                                ...editRecord,
+                                                [field.key]: value,
+                                             })
+                                          }
+                                          name={`select-${field.key}`}
+                                       >
+                                          <SelectTrigger
+                                             id={`select-trigger-${field.key}`}
+                                             name={`select-${field.key}`}
+                                             className='border-opacity-20 focus:border-opacity-50'
+                                          >
+                                             <SelectValue
+                                                placeholder={`Select ${field.label.toLowerCase()}`}
+                                             />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                             {(
+                                                dynamicOptions[field.key] ||
+                                                field.options ||
+                                                []
+                                             ).map((option) => (
+                                                <SelectItem
+                                                   key={option.value}
+                                                   value={option.value}
+                                                >
+                                                   {option.label}
+                                                </SelectItem>
+                                             ))}
+                                          </SelectContent>
+                                       </Select>
+                                    ) : (
+                                       <Input
+                                          type={field.type || "text"}
+                                          id={`edit-${field.key}`}
+                                          name={`edit-${field.key}`}
+                                          value={editRecord[field.key] || ""}
+                                          onChange={(e) =>
+                                             setEditRecord({
+                                                ...editRecord,
+                                                [field.key]: e.target.value,
+                                             })
+                                          }
+                                          className='border-opacity-20 focus:border-opacity-50'
+                                       />
+                                    )}
+                                 </div>
+                              ))}
+                           <div className='col-span-full flex justify-end mt-4'>
+                              <Button
+                                 variant='outline'
+                                 onClick={() => setEditModalOpen(false)}
+                                 className='mr-2'
+                              >
+                                 Cancel
+                              </Button>
+                              <Button
+                                 onClick={handleEditSave}
+                                 className='hover:opacity-90'
+                                 disabled={updateStatus.loading}
+                              >
+                                 {updateStatus.loading
+                                    ? "Saving..."
+                                    : `Save Changes`}
+                              </Button>
+                           </div>
+                        </div>
+                     </DialogContent>
+                  </Dialog>
+               )}
+
+               {/* Notification Dialog */}
+               <NotificationDialog
+                  open={notificationDialog.open}
+                  onOpenChange={(open) =>
+                     setNotificationDialog((prev) => ({ ...prev, open }))
+                  }
+                  title={notificationDialog.title}
+                  message={notificationDialog.message}
+                  type={notificationDialog.type}
+                  autoClose={true}
+               />
+
+               {/* Delete Confirmation Dialog */}
+               <ConfirmationDialog
+                  open={deleteConfirmDialog.open}
+                  onOpenChange={(open) =>
+                     setDeleteConfirmDialog((prev) => ({ ...prev, open }))
+                  }
+                  title={deleteConfirmDialog.title}
+                  description={deleteConfirmDialog.description}
+                  confirmText='Delete'
+                  cancelText='Cancel'
+                  variant='destructive'
+                  onConfirm={() => confirmDelete(deleteConfirmDialog.ids)}
+               />
+
+               {/* Bulk Delete Confirmation Dialog */}
+               <ConfirmationDialog
+                  open={bulkDeleteConfirmDialog.open}
+                  onOpenChange={(open) =>
+                     setBulkDeleteConfirmDialog((prev) => ({ ...prev, open }))
+                  }
+                  title={bulkDeleteConfirmDialog.title}
+                  description={bulkDeleteConfirmDialog.description}
+                  confirmText='Delete All'
+                  cancelText='Cancel'
+                  variant='destructive'
+                  onConfirm={() => confirmDelete(bulkDeleteConfirmDialog.ids)}
                />
             </Card>
          </div>

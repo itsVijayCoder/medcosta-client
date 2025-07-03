@@ -72,8 +72,13 @@ const ProviderTable = () => {
    // Handle edit provider
    const handleEdit = async (id, providerData) => {
       try {
+         // Remove the 'locations' property if it exists in the data to avoid the error
+         const { locations, ...cleanProviderData } = providerData;
+
+         console.log("Editing provider with data:", cleanProviderData);
+
          const { data: updatedProvider, error } =
-            await masterDataService.updateProvider(id, providerData);
+            await masterDataService.updateProvider(id, cleanProviderData);
          if (error) {
             alert(`Error: ${error}`);
             return;
@@ -88,10 +93,6 @@ const ProviderTable = () => {
 
    // Handle delete provider
    const handleDelete = async (id) => {
-      if (!confirm("Are you sure you want to delete this provider?")) {
-         return;
-      }
-
       try {
          // If id is an object, extract the actual id value
          const actualId = typeof id === "object" && id !== null ? id.id : id;
@@ -114,7 +115,8 @@ const ProviderTable = () => {
    // Enhanced config with real-time operations using Supabase
    const enhancedConfig = {
       ...config,
-      onDelete: handleDelete,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
       loading,
       dataSource: "providers", // Connect to Supabase providers table
       refreshData: () => {

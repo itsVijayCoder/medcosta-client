@@ -164,10 +164,6 @@ const ModifierTable = () => {
       console.log("ModifierTable handleDelete called with id:", id);
       console.log("Type of id:", typeof id);
 
-      if (!confirm("Are you sure you want to delete this modifier?")) {
-         return;
-      }
-
       try {
          // If id is an object, extract the actual id value
          const actualId = typeof id === "object" && id !== null ? id.id : id;
@@ -176,22 +172,29 @@ const ModifierTable = () => {
          const { error } = await masterDataService.deleteModifier(actualId);
          if (error) {
             console.error("Error from deleteModifier:", error);
-            alert(`Error: ${error.message || JSON.stringify(error)}`);
-            return;
+            return {
+               success: false,
+               error: error.message || JSON.stringify(error),
+            };
          }
          // Data will be updated automatically via real-time subscription
-         alert("Modifier deleted successfully");
+         return { success: true };
       } catch (error) {
          console.error("Exception deleting modifier:", error);
-         alert("Error occurred while deleting modifier");
+         return {
+            success: false,
+            error: error.message || "Error occurred while deleting modifier",
+         };
       }
    };
 
    // Enhanced config with real-time operations using Supabase
    const enhancedConfig = {
       ...config,
-      onDelete: handleDelete,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
       loading,
+      showEditButton: true, // Show edit button in the table
       dataSource: "modifiers", // Connect to Supabase modifiers table
       refreshData: () => {
          setLoading(true);
@@ -218,9 +221,7 @@ const ModifierTable = () => {
    console.log("ModifierTable data length:", data.length);
    console.log("ModifierTable is data empty?", data.length === 0);
 
-   return (
-      <GenericTable {...enhancedConfig} data={data} showEditButton={true} />
-   );
+   return <GenericTable {...enhancedConfig} data={data} />;
 };
 
 export default ModifierTable;

@@ -88,10 +88,6 @@ const ProcedureTable = () => {
 
    // Handle delete procedure
    const handleDelete = async (id) => {
-      if (!confirm("Are you sure you want to delete this procedure?")) {
-         return;
-      }
-
       try {
          // If id is an object, extract the actual id value
          const actualId = typeof id === "object" && id !== null ? id.id : id;
@@ -114,7 +110,8 @@ const ProcedureTable = () => {
    // Enhanced config with real-time operations using Supabase
    const enhancedConfig = {
       ...config,
-      onDelete: handleDelete,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
       loading,
       dataSource: "procedures", // Connect to Supabase procedures table
       refreshData: () => {

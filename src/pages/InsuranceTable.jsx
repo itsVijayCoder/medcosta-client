@@ -88,10 +88,6 @@ const InsuranceTable = () => {
 
    // Handle delete insurance company
    const handleDelete = async (id) => {
-      if (!confirm("Are you sure you want to delete this insurance company?")) {
-         return;
-      }
-
       try {
          // If id is an object, extract the actual id value
          const actualId = typeof id === "object" && id !== null ? id.id : id;
@@ -116,7 +112,8 @@ const InsuranceTable = () => {
    // Enhanced config with real-time operations using Supabase
    const enhancedConfig = {
       ...config,
-      onDelete: handleDelete,
+      // Don't provide onDelete, let the generic table handle confirmation
+      // onDelete: handleDelete,
       loading,
       dataSource: "insurance_companies", // Connect to Supabase insurance_companies table
       refreshData: () => {
