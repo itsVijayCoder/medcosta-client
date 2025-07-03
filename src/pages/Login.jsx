@@ -15,6 +15,7 @@ import { AuthContext } from "@/App";
 import { authService } from "@/services/authService";
 import logo from "@/assets/WorknoFault.png";
 
+
 export default function Login() {
    const [formData, setFormData] = useState({
       email: "",
@@ -89,7 +90,7 @@ export default function Login() {
                      </h2>
                      <p className='text-primary-100 text-lg max-w-sm'>
                         Securely access your dashboard and manage your
-                        healthcare services efficiently.
+                        healthcare services efficiently.      
                      </p>
                   </div>
 
