@@ -15,7 +15,6 @@ import { AuthContext } from "@/App";
 import { authService } from "@/services/authService";
 import logo from "@/assets/WorknoFault.png";
 
-
 export default function Login() {
    const [formData, setFormData] = useState({
       email: "",
@@ -90,15 +89,15 @@ export default function Login() {
                      </h2>
                      <p className='text-primary-100 text-lg max-w-sm'>
                         Securely access your dashboard and manage your
-                        healthcare services efficiently.      
+                        healthcare services efficiently.
                      </p>
                   </div>
 
                   {/* Bottom text */}
                   <div className='z-10 mt-auto'>
                      <p className='text-sm text-primary-100 opacity-80'>
-                        © {new Date().getFullYear()} MedCosta Healthcare. All
-                        rights reserved.
+                        © {new Date().getFullYear()} WorkNoFault. All rights
+                        reserved.
                      </p>
                   </div>
                </div>
@@ -261,7 +260,7 @@ export default function Login() {
                            )}
                         </Button>
 
-                        <div className='text-center pt-3'>
+                        {/* <div className='text-center pt-3'>
                            <p className='text-sm text-muted-foreground'>
                               Need an account?{" "}
                               <a
@@ -271,7 +270,7 @@ export default function Login() {
                                  Contact administrator
                               </a>
                            </p>
-                        </div>
+                        </div> */}
                      </form>
                   </div>
                </div>
